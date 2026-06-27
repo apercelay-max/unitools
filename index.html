@@ -9,709 +9,457 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
-    :root {
-      --acc:     #7c5cfc;
-      --acc-rgb: 124,92,252;
-      --bg:      #0b0b15;
-      --card:    rgba(255,255,255,.055);
-      --bdr:     rgba(255,255,255,.08);
-      --t1:      #f2f2f7;
-      --t2:      rgba(242,242,247,.55);
-      --t3:      rgba(242,242,247,.28);
-      --safe:    env(safe-area-inset-bottom,0px);
-      --tabh:    82px;
-      --nb:      'Nunito', -apple-system, sans-serif;
-    }
-    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-    html,body { height:100%; overflow:hidden; background:#000; }
-    body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif; color:var(--t1); -webkit-font-smoothing:antialiased; }
-    #root { height:100%; display:flex; justify-content:center; }
-
-    .app {
-      width:100%; max-width:430px; height:100%;
-      display:flex; flex-direction:column;
-      position:relative; overflow:hidden;
-      background:var(--bg);
-      transition:background .4s ease;
-    }
-    .scroll {
-      flex:1; overflow-y:auto; overflow-x:hidden;
-      -webkit-overflow-scrolling:touch;
-      padding-bottom:calc(var(--tabh) + var(--safe) + 12px);
-      scrollbar-width:none;
-    }
-    .scroll::-webkit-scrollbar { display:none; }
-
-    /* ─── LIQUID GLASS TAB BAR ─── */
-    .tabbar {
-      position:absolute; bottom:calc(var(--safe) + 10px);
-      left:14px; right:14px; height:66px;
-      border-radius:28px; z-index:100; overflow:hidden;
-      background:rgba(14,14,26,.45);
-      backdrop-filter:blur(48px) saturate(190%) brightness(108%);
-      -webkit-backdrop-filter:blur(48px) saturate(190%) brightness(108%);
-      box-shadow:
-        inset 0 1.5px 0 rgba(255,255,255,.24),
-        inset 0 -.5px 0 rgba(255,255,255,.07),
-        0 0 0 1px rgba(255,255,255,.10),
-        0 20px 56px rgba(0,0,0,.65),
-        0 6px 18px rgba(0,0,0,.35);
-      display:flex; align-items:center; padding:5px;
-    }
-    .tabbar::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:52%;
-      background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,transparent 100%);
-      border-radius:24px 24px 0 0; pointer-events:none; z-index:0;
-    }
-    .tab {
-      flex:1; height:100%; position:relative; z-index:1;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:3px; border:none; background:none; cursor:pointer;
-      color:rgba(255,255,255,.3); border-radius:23px;
-      transition:all .22s cubic-bezier(.34,1.56,.64,1);
-    }
-    .tab.on {
-      color:#fff;
-      background:rgba(255,255,255,.15);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.26), 0 2px 10px rgba(0,0,0,.25);
-    }
-    .tab-lbl { font-size:10px; font-weight:600; letter-spacing:.01em; }
-
-    /* ─── CARDS ─── */
-    .card {
-      background:var(--card); border:1px solid var(--bdr);
-      border-radius:20px;
-      box-shadow:0 2px 14px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.07);
-    }
-    .list-wrap { border-radius:18px; overflow:hidden; border:1px solid var(--bdr); box-shadow:0 2px 14px rgba(0,0,0,.22); }
-    .list-row  { background:var(--card); padding:13px 16px; border-bottom:1px solid var(--bdr); display:flex; align-items:center; gap:12px; }
-    .list-row:last-child { border-bottom:none; }
-    .list-row-btn { cursor:pointer; }
-    .list-row-btn:active { background:rgba(255,255,255,.04); }
-
-    /* ─── GLASS SHEET ─── */
-    .overlay { position:absolute; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(6px); z-index:200; display:flex; align-items:flex-end; }
-    .sheet {
-      width:100%; max-height:88vh;
-      background:rgba(18,18,30,.85);
-      backdrop-filter:blur(40px) saturate(180%);
-      -webkit-backdrop-filter:blur(40px) saturate(180%);
-      border:1px solid rgba(255,255,255,.12); border-bottom:none;
-      border-radius:26px 26px 0 0;
-      box-shadow:inset 0 1.5px 0 rgba(255,255,255,.18), 0 -8px 40px rgba(0,0,0,.4);
-      animation:sheetUp .28s cubic-bezier(.16,1,.3,1);
-      display:flex; flex-direction:column;
-    }
-    @keyframes sheetUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
-    .sheet-header { padding:20px 20px 14px; flex-shrink:0; }
-    .sheet-body   { flex:1; overflow-y:auto; padding:0 20px 32px; scrollbar-width:none; }
-    .sheet-body::-webkit-scrollbar { display:none; }
-
-    /* ─── FORMS ─── */
-    .inp {
-      width:100%; background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.1); border-radius:12px;
-      color:var(--t1); padding:11px 14px;
-      font-size:15px; outline:none; font-family:inherit;
-      transition:border-color .18s;
-    }
-    .inp:focus { border-color:rgba(var(--acc-rgb),.55); }
-    .inp::placeholder { color:var(--t3); }
-    .inp[type=date],.inp[type=time] { color-scheme:dark; }
-    textarea.inp { resize:none; line-height:1.65; }
-    select.inp { appearance:none; cursor:pointer; }
-
-    /* ─── BUTTONS ─── */
-    .btn-acc {
-      width:100%; background:var(--acc); color:#fff;
-      border:none; border-radius:14px; padding:13px;
-      font-size:15px; font-weight:700; cursor:pointer;
-      font-family:inherit;
-      box-shadow:0 4px 20px rgba(var(--acc-rgb),.4);
-      transition:opacity .12s, box-shadow .2s;
-    }
-    .btn-acc:active { opacity:.82; }
-
-    /* ─── TOGGLE ─── */
-    .tog { width:46px; height:26px; border-radius:13px; background:rgba(255,255,255,.14); cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
-    .tog.on { background:var(--acc); }
-    .tog-knob { position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:10px; background:#fff; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.35); }
-    .tog.on .tog-knob { left:23px; }
-
-    /* ─── CHECKBOX ─── */
-    .chk { width:22px; height:22px; border-radius:11px; border:2px solid rgba(255,255,255,.2); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .18s; }
-    .chk.done { background:var(--acc); border-color:var(--acc); }
-
-    /* ─── CALENDAR ─── */
-    .cday { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:11px; font-size:14px; font-weight:600; cursor:pointer; gap:2px; transition:background .12s; user-select:none; }
-    .cday:active { background:rgba(255,255,255,.07); }
-    .cday.today { background:var(--acc)!important; color:#fff; box-shadow:0 2px 10px rgba(var(--acc-rgb),.4); }
-    .cday.sel:not(.today) { background:rgba(var(--acc-rgb),.18); color:var(--acc); }
-    .cday.grey { color:var(--t3); pointer-events:none; }
-    .cday-dot { width:4px; height:4px; border-radius:2px; background:var(--acc); }
-    .cday.today .cday-dot { background:rgba(255,255,255,.7); }
-
-    /* ─── CALCULATOR — Not Boring style ─── */
-    .cbtn {
-      height:68px; border:none; border-radius:22px;
-      font-size:20px; font-weight:800; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      font-family:'Nunito', -apple-system, sans-serif;
-      transition:transform .08s, opacity .08s;
-      user-select:none;
-    }
-    .cbtn:active { transform:scale(.92); opacity:.75; }
-    .cbtn.num { background:rgba(255,255,255,.09); color:var(--t1); box-shadow:0 4px 12px rgba(0,0,0,.3), inset 0 1.5px 0 rgba(255,255,255,.12); }
-    .cbtn.fn  { background:rgba(255,255,255,.16); color:var(--t1); box-shadow:0 4px 12px rgba(0,0,0,.3), inset 0 1.5px 0 rgba(255,255,255,.18); }
-    .cbtn.op  { background:rgba(var(--acc-rgb),.25); color:var(--acc); box-shadow:0 4px 14px rgba(var(--acc-rgb),.2), inset 0 1.5px 0 rgba(255,255,255,.14); }
-    .cbtn.eq  {
-      background:linear-gradient(135deg,var(--acc),rgba(var(--acc-rgb),1.0));
-      color:#fff;
-      box-shadow:0 6px 22px rgba(var(--acc-rgb),.5), inset 0 1.5px 0 rgba(255,255,255,.25);
-    }
-    .cbtn.sci { height:46px; font-size:12px; font-weight:700; background:rgba(255,255,255,.06); color:var(--t2); border-radius:14px; }
-
-    /* ─── MISC ─── */
-    .page { animation:pageIn .22s cubic-bezier(.16,1,.3,1) both; }
-    @keyframes pageIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
-    .pdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-    .slbl { font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--t3); padding:0 4px; margin-bottom:7px; }
-    .divider { height:1px; background:var(--bdr); margin:4px 0; }
-
-    /* ─── WIDGET GRID ─── */
-    .w-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .w-wide { grid-column:span 2; }
-    .w-half { grid-column:span 1; }
-    .w-edit-overlay { position:absolute; inset:0; border-radius:22px; border:2px solid rgba(var(--acc-rgb),.5); pointer-events:none; z-index:1; }
-    .w-edit-btns { position:absolute; top:7px; right:7px; display:flex; gap:4px; z-index:10; }
-    .w-edit-btn { width:26px; height:26px; border-radius:8px; border:none; cursor:pointer; color:#fff; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
-
-    /* ─── NOT BORING: Widget micro-label ─── */
-    .wlbl { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--t3); margin-bottom:10px; }
+    :root{--acc:#7c5cfc;--acc-rgb:124,92,252;--bg:#0b0b15;--card:rgba(255,255,255,.055);--bdr:rgba(255,255,255,.08);--t1:#f2f2f7;--t2:rgba(242,242,247,.55);--t3:rgba(242,242,247,.28);--safe:env(safe-area-inset-bottom,0px);--tabh:82px;--nb:'Nunito',-apple-system,sans-serif;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow:hidden;background:#000;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;color:var(--t1);-webkit-font-smoothing:antialiased;}
+    #root{height:100%;display:flex;justify-content:center;}
+    .app{width:100%;max-width:430px;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--bg);transition:background .4s ease;}
+    .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--tabh) + var(--safe) + 12px);scrollbar-width:none;}
+    .scroll::-webkit-scrollbar{display:none;}
+    .tabbar{position:absolute;bottom:calc(var(--safe) + 10px);left:10px;right:10px;height:66px;border-radius:28px;z-index:100;overflow:hidden;background:rgba(14,14,26,.45);backdrop-filter:blur(48px) saturate(190%) brightness(108%);-webkit-backdrop-filter:blur(48px) saturate(190%) brightness(108%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.24),inset 0 -.5px 0 rgba(255,255,255,.07),0 0 0 1px rgba(255,255,255,.10),0 20px 56px rgba(0,0,0,.65),0 6px 18px rgba(0,0,0,.35);display:flex;align-items:center;padding:5px;}
+    .tabbar::before{content:'';position:absolute;top:0;left:0;right:0;height:52%;background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,transparent 100%);border-radius:24px 24px 0 0;pointer-events:none;z-index:0;}
+    .tab{flex:1;height:100%;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.3);border-radius:23px;transition:all .22s cubic-bezier(.34,1.56,.64,1);}
+    .tab.on{color:#fff;background:rgba(255,255,255,.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.26),0 2px 10px rgba(0,0,0,.25);}
+    .tab-lbl{font-size:9px;font-weight:600;letter-spacing:.01em;}
+    .card{background:var(--card);border:1px solid var(--bdr);border-radius:20px;box-shadow:0 2px 14px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07);}
+    .list-wrap{border-radius:18px;overflow:hidden;border:1px solid var(--bdr);box-shadow:0 2px 14px rgba(0,0,0,.22);}
+    .list-row{background:var(--card);padding:13px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:12px;}
+    .list-row:last-child{border-bottom:none;}
+    .list-row-btn{cursor:pointer;}
+    .list-row-btn:active{background:rgba(255,255,255,.04);}
+    .overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:flex-end;}
+    .sheet{width:100%;max-height:88vh;background:rgba(18,18,30,.85);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:26px 26px 0 0;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.18),0 -8px 40px rgba(0,0,0,.4);animation:sheetUp .28s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;}
+    @keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+    .sheet-header{padding:20px 20px 14px;flex-shrink:0;}
+    .sheet-body{flex:1;overflow-y:auto;padding:0 20px 32px;scrollbar-width:none;}
+    .sheet-body::-webkit-scrollbar{display:none;}
+    .inp{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:var(--t1);padding:11px 14px;font-size:15px;outline:none;font-family:inherit;transition:border-color .18s;}
+    .inp:focus{border-color:rgba(var(--acc-rgb),.55);}
+    .inp::placeholder{color:var(--t3);}
+    .inp[type=date],.inp[type=time]{color-scheme:dark;}
+    textarea.inp{resize:none;line-height:1.65;}
+    select.inp{appearance:none;cursor:pointer;}
+    .btn-acc{width:100%;background:var(--acc);color:#fff;border:none;border-radius:14px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(var(--acc-rgb),.4);transition:opacity .12s,box-shadow .2s;}
+    .btn-acc:active{opacity:.82;}
+    .tog{width:46px;height:26px;border-radius:13px;background:rgba(255,255,255,.14);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+    .tog.on{background:var(--acc);}
+    .tog-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:10px;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.35);}
+    .tog.on .tog-knob{left:23px;}
+    .chk{width:22px;height:22px;border-radius:11px;border:2px solid rgba(255,255,255,.2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+    .chk.done{background:var(--acc);border-color:var(--acc);}
+    .cday{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;gap:2px;transition:background .12s;user-select:none;}
+    .cday:active{background:rgba(255,255,255,.07);}
+    .cday.today{background:var(--acc)!important;color:#fff;box-shadow:0 2px 10px rgba(var(--acc-rgb),.4);}
+    .cday.sel:not(.today){background:rgba(var(--acc-rgb),.18);color:var(--acc);}
+    .cday.grey{color:var(--t3);pointer-events:none;}
+    .cday-dot{width:4px;height:4px;border-radius:2px;background:var(--acc);}
+    .cday.today .cday-dot{background:rgba(255,255,255,.7);}
+    .cbtn{height:68px;border:none;border-radius:22px;font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',-apple-system,sans-serif;transition:transform .08s,opacity .08s;user-select:none;}
+    .cbtn:active{transform:scale(.92);opacity:.75;}
+    .cbtn.num{background:rgba(255,255,255,.09);color:var(--t1);box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 1.5px 0 rgba(255,255,255,.12);}
+    .cbtn.fn{background:rgba(255,255,255,.16);color:var(--t1);box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 1.5px 0 rgba(255,255,255,.18);}
+    .cbtn.op{background:rgba(var(--acc-rgb),.25);color:var(--acc);box-shadow:0 4px 14px rgba(var(--acc-rgb),.2),inset 0 1.5px 0 rgba(255,255,255,.14);}
+    .cbtn.eq{background:linear-gradient(135deg,var(--acc),rgba(var(--acc-rgb),1.0));color:#fff;box-shadow:0 6px 22px rgba(var(--acc-rgb),.5),inset 0 1.5px 0 rgba(255,255,255,.25);}
+    .cbtn.sci{height:46px;font-size:12px;font-weight:700;background:rgba(255,255,255,.06);color:var(--t2);border-radius:14px;}
+    .page{animation:pageIn .22s cubic-bezier(.16,1,.3,1) both;}
+    @keyframes pageIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+    .slbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);padding:0 4px;margin-bottom:7px;}
+    .divider{height:1px;background:var(--bdr);margin:4px 0;}
+    .w-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .w-wide{grid-column:span 2;}
+    .w-half{grid-column:span 1;}
+    .w-edit-overlay{position:absolute;inset:0;border-radius:22px;border:2px solid rgba(var(--acc-rgb),.5);pointer-events:none;z-index:1;}
+    .w-edit-btns{position:absolute;top:7px;right:7px;display:flex;gap:4px;z-index:10;}
+    .w-edit-btn{width:26px;height:26px;border-radius:8px;border:none;cursor:pointer;color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+    .wlbl{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:10px;}
+    .subtabs{display:flex;gap:8px;padding:14px 18px 0;flex-shrink:0;}
+    .subtab{flex:1;padding:9px;border-radius:14px;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;}
+    .conv-scroll{padding:0 18px 0;overflow-y:auto;flex:1;scrollbar-width:none;}
+    .conv-scroll::-webkit-scrollbar{display:none;}
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef, useContext, createContext, useCallback } = React;
+const {useState,useEffect,useRef,useContext,createContext,useCallback}=React;
 
 /* ─── UTILS ─── */
-const ls = { get:(k,d)=>{ try{return JSON.parse(localStorage.getItem(k))??d;}catch{return d;} }, set:(k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch{} } };
-const todayISO  = () => new Date().toISOString().slice(0,10);
-const dateISO   = d  => d.toISOString().slice(0,10);
-const parseISO  = s  => new Date(s+'T00:00:00');
-const hex2rgb   = h  => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `${r},${g},${b}`; };
-const fmtTime   = iso => { if(!iso) return ''; const d=new Date(iso),now=new Date(),diff=now-d; if(diff<86400000) return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); if(diff<604800000) return d.toLocaleDateString('fr-FR',{weekday:'short'}); return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); };
-const mkId      = () => Math.random().toString(36).slice(2,9);
+const ls={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d;}catch{return d;}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}}};
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const dateISO=d=>d.toISOString().slice(0,10);
+const parseISO=s=>new Date(s+'T00:00:00');
+const hex2rgb=h=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `${r},${g},${b}`;};
+const fmtTime=iso=>{if(!iso)return'';const d=new Date(iso),now=new Date(),diff=now-d;if(diff<86400000)return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});if(diff<604800000)return d.toLocaleDateString('fr-FR',{weekday:'short'});return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});};
+const mkId=()=>Math.random().toString(36).slice(2,9);
+const pad2=n=>String(n).padStart(2,'0');
+
+/* ─── window.__utLive init ─── */
+{const saved=ls.get('ut6_live',null);
+if(saved?.type==='timer'&&saved.running&&saved.endTime<Date.now()){window.__utLive=null;ls.set('ut6_live',null);}
+else{window.__utLive=saved;}}
 
 /* ─── NOT BORING HELPERS ─── */
-// Gradient text style
-const gT = (c1,c2,sz,wt=900) => ({
-  fontSize:sz, fontWeight:wt,
-  fontFamily:"'Nunito', -apple-system, sans-serif",
-  background:`linear-gradient(135deg, ${c1}, ${c2})`,
-  WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-  backgroundClip:'text', lineHeight:1, display:'inline-block',
-});
+const gT=(c1,c2,sz,wt=900)=>({fontSize:sz,fontWeight:wt,fontFamily:"'Nunito',-apple-system,sans-serif",background:`linear-gradient(135deg,${c1},${c2})`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',lineHeight:1,display:'inline-block'});
+const tint=(c1,c2)=>({borderRadius:22,overflow:'hidden',position:'relative',background:`linear-gradient(145deg,rgba(${hex2rgb(c1)},.1) 0%,rgba(${hex2rgb(c2)},.06) 100%)`,border:`1px solid rgba(${hex2rgb(c1)},.22)`,boxShadow:`0 0 32px rgba(${hex2rgb(c1)},.14),0 8px 28px rgba(0,0,0,.32),inset 0 1.5px 0 rgba(255,255,255,.1)`});
 
-// Tinted card style (Not Boring: each metric has its own color)
-const tint = (c1,c2) => ({
-  borderRadius:22, overflow:'hidden', position:'relative',
-  background:`linear-gradient(145deg, rgba(${hex2rgb(c1)},.1) 0%, rgba(${hex2rgb(c2)},.06) 100%)`,
-  border:`1px solid rgba(${hex2rgb(c1)},.22)`,
-  boxShadow:`0 0 32px rgba(${hex2rgb(c1)},.14), 0 8px 28px rgba(0,0,0,.32), inset 0 1.5px 0 rgba(255,255,255,.1)`,
-});
-
-// Widget color pairs — one per widget type
-const WC = {
-  clock:  ['#ff9f43','#ee5a24'],   // Sunrise amber-orange
-  wx:     ['#54a0ff','#2e86de'],   // Sky blue
-  events: ['#a29bfe','#6c5ce7'],   // Lavender-purple
-  rems:   ['#ff6b81','#ff4757'],   // Coral-red
-  notes:  ['#55efc4','#00b894'],   // Mint-green
-  chrono: ['#ffd32a','#f9ca24'],   // Golden yellow
-  quote:  ['#fd79a8','#e84393'],   // Hot pink
+const WC={
+  clock:['#ff9f43','#ee5a24'],wx:['#54a0ff','#2e86de'],events:['#a29bfe','#6c5ce7'],
+  rems:['#ff6b81','#ff4757'],notes:['#55efc4','#00b894'],chrono:['#ffd32a','#f9ca24'],
+  live:['#ffd32a','#f9ca24'],quote:['#fd79a8','#e84393'],stocks:['#00b894','#00cec9'],
 };
 
-/* ─── THEMES ─── */
-const THEMES = [
-  { id:'cosmos',   name:'Cosmos',   col1:'#0b0b15', col2:'#1a0f35', col3:'#06060e',
-    bg:'#0b0b15', grad:'radial-gradient(ellipse 110% 50% at 50% -8%,rgba(ACC_RGB,.22) 0%,transparent 68%),#0b0b15',
-    card:'rgba(255,255,255,.055)', bdr:'rgba(255,255,255,.08)', t1:'#f2f2f7', t2:'rgba(242,242,247,.55)', t3:'rgba(242,242,247,.28)' },
-  { id:'midnight', name:'Midnight', col1:'#000000', col2:'#0c0008', col3:'#050005',
-    bg:'#000000', grad:'radial-gradient(ellipse 80% 40% at 50% 0%,#0d0010 0%,#000000 55%)',
-    card:'rgba(255,255,255,.04)', bdr:'rgba(255,255,255,.065)', t1:'#ffffff', t2:'rgba(255,255,255,.5)', t3:'rgba(255,255,255,.22)' },
-  { id:'ocean',    name:'Ocean',    col1:'#010e1e', col2:'#031e3d', col3:'#020a14',
-    bg:'#020d1a', grad:'radial-gradient(ellipse 150% 65% at -10% 0%,#0b2845 0%,#020d1a 65%)',
-    card:'rgba(255,255,255,.055)', bdr:'rgba(255,255,255,.09)', t1:'#e8f4ff', t2:'rgba(232,244,255,.5)', t3:'rgba(232,244,255,.25)' },
-  { id:'foret',    name:'Foret',    col1:'#040d06', col2:'#0a2212', col3:'#030a05',
-    bg:'#050e07', grad:'radial-gradient(ellipse 130% 60% at 110% 0%,#102a14 0%,#050e07 65%)',
-    card:'rgba(255,255,255,.055)', bdr:'rgba(255,255,255,.08)', t1:'#e8f5ea', t2:'rgba(232,245,234,.5)', t3:'rgba(232,245,234,.25)' },
-  { id:'aurora',   name:'Aurora',   col1:'#060810', col2:'#160840', col3:'#04050e',
-    bg:'#06080f', grad:'linear-gradient(142deg,#110525 0%,#060c22 45%,#040912 100%)',
-    card:'rgba(255,255,255,.06)', bdr:'rgba(255,255,255,.09)', t1:'#f0eaff', t2:'rgba(240,234,255,.5)', t3:'rgba(240,234,255,.25)' },
-  { id:'obsidian', name:'Obsidian', col1:'#0d0c0b', col2:'#201a10', col3:'#0a0905',
-    bg:'#0d0c0b', grad:'linear-gradient(180deg,#1d1810 0%,#0d0c0b 55%)',
-    card:'rgba(255,255,255,.055)', bdr:'rgba(255,255,255,.08)', t1:'#faf8f5', t2:'rgba(250,248,245,.5)', t3:'rgba(250,248,245,.25)' },
-  { id:'crimson',  name:'Crimson',  col1:'#0e0508', col2:'#280012', col3:'#08020a',
-    bg:'#0e0508', grad:'radial-gradient(ellipse 110% 55% at 110% -5%,#2a0012 0%,#0e0508 65%)',
-    card:'rgba(255,255,255,.05)', bdr:'rgba(255,255,255,.08)', t1:'#fff0f2', t2:'rgba(255,240,242,.5)', t3:'rgba(255,240,242,.25)' },
-  { id:'acier',    name:'Acier',    col1:'#0d0f13', col2:'#1c2030', col3:'#090b0f',
-    bg:'#0d0f13', grad:'linear-gradient(180deg,#1a1e2e 0%,#0d0f13 55%)',
-    card:'rgba(255,255,255,.055)', bdr:'rgba(255,255,255,.09)', t1:'#ecf0f4', t2:'rgba(236,240,244,.5)', t3:'rgba(236,240,244,.25)' },
+const THEMES=[
+  {id:'cosmos',name:'Cosmos',col1:'#0b0b15',col2:'#1a0f35',col3:'#06060e',bg:'#0b0b15',grad:'radial-gradient(ellipse 110% 50% at 50% -8%,rgba(ACC_RGB,.22) 0%,transparent 68%),#0b0b15',card:'rgba(255,255,255,.055)',bdr:'rgba(255,255,255,.08)',t1:'#f2f2f7',t2:'rgba(242,242,247,.55)',t3:'rgba(242,242,247,.28)'},
+  {id:'midnight',name:'Midnight',col1:'#000000',col2:'#0c0008',col3:'#050005',bg:'#000000',grad:'radial-gradient(ellipse 80% 40% at 50% 0%,#0d0010 0%,#000000 55%)',card:'rgba(255,255,255,.04)',bdr:'rgba(255,255,255,.065)',t1:'#ffffff',t2:'rgba(255,255,255,.5)',t3:'rgba(255,255,255,.22)'},
+  {id:'ocean',name:'Ocean',col1:'#010e1e',col2:'#031e3d',col3:'#020a14',bg:'#020d1a',grad:'radial-gradient(ellipse 150% 65% at -10% 0%,#0b2845 0%,#020d1a 65%)',card:'rgba(255,255,255,.055)',bdr:'rgba(255,255,255,.09)',t1:'#e8f4ff',t2:'rgba(232,244,255,.5)',t3:'rgba(232,244,255,.25)'},
+  {id:'foret',name:'Foret',col1:'#040d06',col2:'#0a2212',col3:'#030a05',bg:'#050e07',grad:'radial-gradient(ellipse 130% 60% at 110% 0%,#102a14 0%,#050e07 65%)',card:'rgba(255,255,255,.055)',bdr:'rgba(255,255,255,.08)',t1:'#e8f5ea',t2:'rgba(232,245,234,.5)',t3:'rgba(232,245,234,.25)'},
+  {id:'aurora',name:'Aurora',col1:'#060810',col2:'#160840',col3:'#04050e',bg:'#06080f',grad:'linear-gradient(142deg,#110525 0%,#060c22 45%,#040912 100%)',card:'rgba(255,255,255,.06)',bdr:'rgba(255,255,255,.09)',t1:'#f0eaff',t2:'rgba(240,234,255,.5)',t3:'rgba(240,234,255,.25)'},
+  {id:'obsidian',name:'Obsidian',col1:'#0d0c0b',col2:'#201a10',col3:'#0a0905',bg:'#0d0c0b',grad:'linear-gradient(180deg,#1d1810 0%,#0d0c0b 55%)',card:'rgba(255,255,255,.055)',bdr:'rgba(255,255,255,.08)',t1:'#faf8f5',t2:'rgba(250,248,245,.5)',t3:'rgba(250,248,245,.25)'},
+  {id:'crimson',name:'Crimson',col1:'#0e0508',col2:'#280012',col3:'#08020a',bg:'#0e0508',grad:'radial-gradient(ellipse 110% 55% at 110% -5%,#2a0012 0%,#0e0508 65%)',card:'rgba(255,255,255,.05)',bdr:'rgba(255,255,255,.08)',t1:'#fff0f2',t2:'rgba(255,240,242,.5)',t3:'rgba(255,240,242,.25)'},
+  {id:'acier',name:'Acier',col1:'#0d0f13',col2:'#1c2030',col3:'#090b0f',bg:'#0d0f13',grad:'linear-gradient(180deg,#1a1e2e 0%,#0d0f13 55%)',card:'rgba(255,255,255,.055)',bdr:'rgba(255,255,255,.09)',t1:'#ecf0f4',t2:'rgba(236,240,244,.5)',t3:'rgba(236,240,244,.25)'},
 ];
-
-const ACCENTS = [
-  {id:'violet', hex:'#7c5cfc', rgb:'124,92,252'},
-  {id:'blue',   hex:'#0a84ff', rgb:'10,132,255'},
-  {id:'green',  hex:'#30d158', rgb:'48,209,88'},
-  {id:'orange', hex:'#ff9f0a', rgb:'255,159,10'},
-  {id:'pink',   hex:'#ff375f', rgb:'255,55,95'},
-  {id:'cyan',   hex:'#64d2ff', rgb:'100,210,255'},
-];
-
-const ThemeCtx = createContext(null);
+const ACCENTS=[{id:'violet',hex:'#7c5cfc',rgb:'124,92,252'},{id:'blue',hex:'#0a84ff',rgb:'10,132,255'},{id:'green',hex:'#30d158',rgb:'48,209,88'},{id:'orange',hex:'#ff9f0a',rgb:'255,159,10'},{id:'pink',hex:'#ff375f',rgb:'255,55,95'},{id:'cyan',hex:'#64d2ff',rgb:'100,210,255'}];
+const ThemeCtx=createContext(null);
 
 /* ─── ICONS ─── */
-const Ico = ({d,size=22,sw=1.8,col}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={col||'currentColor'} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">{d}</svg>
-);
-const I = {
-  home: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
-  cal:  <><rect x="3" y="4" width="18" height="18" rx="2.5"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
-  calc: <><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="8"  cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="8"  cy="14" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="14" r=".9" fill="currentColor" stroke="none"/><circle cx="16" cy="14" r=".9" fill="currentColor" stroke="none"/><line x1="8" y1="18" x2="12" y2="18"/><circle cx="16" cy="18" r=".9" fill="currentColor" stroke="none"/></>,
-  note: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="14" y1="17" x2="8" y2="17"/></>,
-  bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>,
-  gear: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
-  sun:  <><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>,
-  star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>,
-  clk:  <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
-  cl:   <polyline points="15 18 9 12 15 6"/>,
-  cr:   <polyline points="9 18 15 12 9 6"/>,
-  plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
-  chk:  <polyline points="20 6 9 17 4 12"/>,
-  x:    <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
-  del:  <><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></>,
-  back: <><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>,
-  edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
-  pin:  <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
-  link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></>,
-  list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>,
-  srch: <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
-  rep:  <><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>,
-  car:  <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>,
-  arrU: <polyline points="18 15 12 9 6 15"/>,
-  arrD: <polyline points="6 9 12 15 18 9"/>,
+const Ico=({d,size=22,sw=1.8,col})=>(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={col||'currentColor'} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">{d}</svg>);
+const I={
+  home:<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+  cal:<><rect x="3" y="4" width="18" height="18" rx="2.5"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+  calc:<><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="8" cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="8" cy="14" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="14" r=".9" fill="currentColor" stroke="none"/><circle cx="16" cy="14" r=".9" fill="currentColor" stroke="none"/><line x1="8" y1="18" x2="12" y2="18"/><circle cx="16" cy="18" r=".9" fill="currentColor" stroke="none"/></>,
+  note:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="14" y1="17" x2="8" y2="17"/></>,
+  bell:<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>,
+  timer:<><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 15 13"/><line x1="9" y1="3" x2="15" y2="3"/><line x1="12" y1="1" x2="12" y2="3"/></>,
+  gear:<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+  sun:<><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>,
+  star:<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>,
+  clk:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+  cl:<polyline points="15 18 9 12 15 6"/>,
+  cr:<polyline points="9 18 15 12 9 6"/>,
+  plus:<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+  chk:<polyline points="20 6 9 17 4 12"/>,
+  x:<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+  del:<><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></>,
+  back:<><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>,
+  edit:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+  pin:<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
+  link:<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></>,
+  list:<><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>,
+  srch:<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
+  rep:<><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>,
+  arrU:<polyline points="18 15 12 9 6 15"/>,
+  arrD:<polyline points="6 9 12 15 18 9"/>,
+  chart:<><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></>,
 };
 
-/* ══════════════════════════════════════
-   HOME — WIDGETS (Not Boring style)
-══════════════════════════════════════ */
-const WIDGET_CATALOG = [
-  { type:'clock',  name:'Horloge',         desc:'Heure et date en direct',  size:'wide', ico:I.clk  },
-  { type:'wx',     name:'Meteo',            desc:'Temperature locale',       size:'half', ico:I.sun  },
-  { type:'events', name:'Evenements',      desc:'Prochains evenements',     size:'wide', ico:I.cal  },
-  { type:'rems',   name:'Rappels',         desc:'Rappels du jour',          size:'wide', ico:I.bell },
-  { type:'notes',  name:'Notes recentes', desc:'Dernieres notes',          size:'wide', ico:I.note },
-  { type:'chrono', name:'Chronometre',     desc:'Chrono / minuteur',        size:'half', ico:I.clk  },
-  { type:'quote',  name:'Citation du jour',desc:'Pensee du jour',           size:'wide', ico:I.star },
+/* ─── WIDGET CATALOG v6 ─── */
+const WIDGET_CATALOG=[
+  {type:'clock', name:'Horloge',       desc:'Heure et date en direct',    size:'wide',ico:I.clk},
+  {type:'wx',    name:'Meteo',         desc:'Temperature locale',         size:'half',ico:I.sun},
+  {type:'events',name:'Evenements',   desc:'Prochains evenements',       size:'wide',ico:I.cal},
+  {type:'rems',  name:'Rappels',      desc:'Rappels du jour',            size:'wide',ico:I.bell},
+  {type:'notes', name:'Notes recentes',desc:'Dernieres notes',           size:'wide',ico:I.note},
+  {type:'live',  name:'En cours',     desc:'Activite active (minuteur)', size:'half',ico:I.timer},
+  {type:'stocks',name:'Bourse',       desc:'Marches financiers',         size:'wide',ico:I.chart},
+  {type:'quote', name:'Citation du jour',desc:'Pensee du jour',         size:'wide',ico:I.star},
+  {type:'chrono',name:'Chronometre', desc:'Chrono rapide',              size:'half',ico:I.clk},
+];
+const DEF_LAYOUT=[
+  {id:'a',type:'clock', size:'wide'},
+  {id:'b',type:'wx',    size:'half'},
+  {id:'c',type:'live',  size:'half'},
+  {id:'d',type:'events',size:'wide'},
+  {id:'e',type:'rems',  size:'wide'},
+  {id:'f',type:'quote', size:'wide'},
 ];
 
-const DEF_LAYOUT = [
-  {id:'a',type:'clock',  size:'wide'},
-  {id:'b',type:'wx',     size:'half'},
-  {id:'c',type:'chrono', size:'half'},
-  {id:'d',type:'events', size:'wide'},
-  {id:'e',type:'rems',   size:'wide'},
-  {id:'f',type:'quote',  size:'wide'},
-];
-
-/* ── CLOCK ── */
-function ClockWidget() {
-  const [now, setNow] = useState(new Date());
+/* ══ CLOCK ══ */
+function ClockWidget(){
+  const [now,setNow]=useState(new Date());
   useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
-  const pad = n => String(n).padStart(2,'0');
-  const [h,m,s] = [now.getHours(),now.getMinutes(),now.getSeconds()].map(pad);
-  const [c1,c2] = WC.clock;
-  return (
-    <div style={{padding:'18px 20px 16px'}}>
-      <div className="wlbl">Heure</div>
-      <div style={{lineHeight:1,marginBottom:6}}>
-        <span style={gT(c1,c2,68)}>{h}:{m}</span>
-        <span style={{...gT(c1,c2,26),opacity:.6,marginLeft:2}}>:{s}</span>
-      </div>
-      <div style={{fontSize:12,fontWeight:700,color:'var(--t3)',textTransform:'capitalize',letterSpacing:'.01em',marginTop:6}}>
-        {now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
-      </div>
+  const [h,m,s]=[now.getHours(),now.getMinutes(),now.getSeconds()].map(pad2);
+  const [c1,c2]=WC.clock;
+  return(<div style={{padding:'18px 20px 16px'}}>
+    <div className="wlbl">Heure</div>
+    <div style={{lineHeight:1,marginBottom:6}}>
+      <span style={gT(c1,c2,68)}>{h}:{m}</span>
+      <span style={{...gT(c1,c2,26),opacity:.6,marginLeft:2}}>:{s}</span>
     </div>
-  );
+    <div style={{fontSize:12,fontWeight:700,color:'var(--t3)',textTransform:'capitalize',marginTop:6}}>
+      {now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
+    </div>
+  </div>);
 }
 
-/* ── WEATHER ── */
-const WMO = c => {
-  if(c===0)  return ['Ensoleille',    '#ffd32a'];
-  if(c<=3)   return ['Nuageux',       'var(--t2)'];
-  if(c<=49)  return ['Brouillard',    'var(--t3)'];
-  if(c<=59)  return ['Bruine',        '#54a0ff'];
-  if(c<=69)  return ['Pluie',         '#2e86de'];
-  if(c<=79)  return ['Neige',         '#e8f4ff'];
-  if(c<=82)  return ['Averses',       '#2e86de'];
-  return             ['Orage',        '#ff9f43'];
-};
-
-function WeatherWidget() {
-  const [wx,   setWx]  = useState(()=>ls.get('ut4_wx',null));
-  const [load, setLoad]= useState(false);
-  const [err,  setErr] = useState(null);
-  const [c1,c2] = WC.wx;
-
-  const go = () => {
-    if(!navigator.geolocation){setErr('Non disponible');return;}
-    setLoad(true); setErr(null);
-    navigator.geolocation.getCurrentPosition(async pos=>{
-      try{
-        const r=await window.fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude.toFixed(4)}&longitude=${pos.coords.longitude.toFixed(4)}&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m&timezone=auto`);
-        const d=await r.json();
-        const w={...d.current,ts:Date.now()};
-        setWx(w); ls.set('ut4_wx',w);
-      }catch{setErr('Erreur');}
-      setLoad(false);
-    },()=>{setErr('Position refusee');setLoad(false);});
-  };
-
+/* ══ WEATHER ══ */
+const WMO=c=>{if(c===0)return['Ensoleille','#ffd32a'];if(c<=3)return['Nuageux','var(--t2)'];if(c<=49)return['Brouillard','var(--t3)'];if(c<=59)return['Bruine','#54a0ff'];if(c<=69)return['Pluie','#2e86de'];if(c<=79)return['Neige','#e8f4ff'];if(c<=82)return['Averses','#2e86de'];return['Orage','#ff9f43'];};
+function WeatherWidget(){
+  const [wx,setWx]=useState(()=>ls.get('ut4_wx',null));
+  const [load,setLoad]=useState(false);const [err,setErr]=useState(null);
+  const [c1,c2]=WC.wx;
+  const go=()=>{if(!navigator.geolocation){setErr('Non disponible');return;}setLoad(true);setErr(null);
+    navigator.geolocation.getCurrentPosition(async pos=>{try{
+      const r=await window.fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude.toFixed(4)}&longitude=${pos.coords.longitude.toFixed(4)}&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m&timezone=auto`);
+      const d=await r.json();const w={...d.current,ts:Date.now()};setWx(w);ls.set('ut4_wx',w);
+    }catch{setErr('Erreur');}setLoad(false);},()=>{setErr('Position refusee');setLoad(false);});};
   useEffect(()=>{if(!wx||Date.now()-wx.ts>900000)go();},[]);
-
-  if(load) return <div style={{padding:'28px',textAlign:'center',color:'var(--t3)',fontSize:13}}>...</div>;
-  if(!wx||err) return (
-    <div style={{padding:'20px',textAlign:'center'}}>
-      <div style={{fontSize:10,color:'var(--t3)',marginBottom:10,fontWeight:700}}>{err||''}</div>
-      <button onClick={go} style={{background:`rgba(${hex2rgb(c1)},.2)`,border:'none',borderRadius:12,padding:'8px 16px',color:c1,fontSize:13,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>Localiser</button>
-    </div>
-  );
-
-  const [desc] = WMO(wx.weathercode);
-  return (
-    <div style={{padding:'16px 16px'}}>
-      <div className="wlbl">Meteo</div>
-      <div style={{lineHeight:1}}>
-        <span style={gT(c1,c2,54)}>{Math.round(wx.temperature_2m)}</span>
-        <span style={{...gT(c1,c2,26),opacity:.75}}>°</span>
-      </div>
-      <div style={{fontSize:12,fontWeight:700,color:'var(--t2)',marginTop:7}}>{desc}</div>
-      <div style={{fontSize:10,fontWeight:600,color:'var(--t3)',marginTop:3}}>
-        Ressenti {Math.round(wx.apparent_temperature)}° · {Math.round(wx.windspeed_10m)} km/h
-      </div>
-      <button onClick={go} style={{background:'none',border:'none',padding:'4px 0 0',color:'var(--t3)',fontSize:9,fontWeight:700,cursor:'pointer',letterSpacing:'.06em',textTransform:'uppercase',fontFamily:'inherit',display:'block',marginTop:4}}>Actualiser</button>
-    </div>
-  );
+  if(load)return<div style={{padding:'28px',textAlign:'center',color:'var(--t3)',fontSize:13}}>...</div>;
+  if(!wx||err)return(<div style={{padding:'20px',textAlign:'center'}}>
+    <div style={{fontSize:10,color:'var(--t3)',marginBottom:10,fontWeight:700}}>{err||''}</div>
+    <button onClick={go} style={{background:`rgba(${hex2rgb(c1)},.2)`,border:'none',borderRadius:12,padding:'8px 16px',color:c1,fontSize:13,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>Localiser</button>
+  </div>);
+  const [desc]=WMO(wx.weathercode);
+  return(<div style={{padding:'16px'}}>
+    <div className="wlbl">Meteo</div>
+    <div style={{lineHeight:1}}><span style={gT(c1,c2,54)}>{Math.round(wx.temperature_2m)}</span><span style={{...gT(c1,c2,26),opacity:.75}}>°</span></div>
+    <div style={{fontSize:12,fontWeight:700,color:'var(--t2)',marginTop:7}}>{desc}</div>
+    <div style={{fontSize:10,fontWeight:600,color:'var(--t3)',marginTop:3}}>Ressenti {Math.round(wx.apparent_temperature)}° · {Math.round(wx.windspeed_10m)} km/h</div>
+    <button onClick={go} style={{background:'none',border:'none',padding:'4px 0 0',color:'var(--t3)',fontSize:9,fontWeight:700,cursor:'pointer',letterSpacing:'.06em',textTransform:'uppercase',fontFamily:'inherit',display:'block',marginTop:4}}>Actualiser</button>
+  </div>);
 }
 
-/* ── EVENTS ── */
-function EventsWidget({onNav}) {
-  const evts = ls.get('ut3_evts',{});
-  const td   = todayISO();
-  const upcoming = [];
-  Object.entries(evts).filter(([d])=>d>=td).sort(([a],[b])=>a.localeCompare(b))
-    .forEach(([date,arr])=>arr.forEach(e=>upcoming.push({...e,date})));
-  const shown = upcoming.slice(0,3);
-  const [c1,c2] = WC.events;
-
-  return (
-    <div style={{padding:'16px 18px'}}>
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
-        <div>
-          <div className="wlbl">Evenements</div>
-          <span style={gT(c1,c2,48)}>{upcoming.length}</span>
-          <span style={{fontSize:13,fontWeight:700,color:'var(--t3)',marginLeft:6}}>a venir</span>
+/* ══ EVENTS ══ */
+function EventsWidget({onNav}){
+  const evts=ls.get('ut3_evts',{});const td=todayISO();
+  const upcoming=[];
+  Object.entries(evts).filter(([d])=>d>=td).sort(([a],[b])=>a.localeCompare(b)).forEach(([date,arr])=>arr.forEach(e=>upcoming.push({...e,date})));
+  const shown=upcoming.slice(0,3);const [c1,c2]=WC.events;
+  return(<div style={{padding:'16px 18px'}}>
+    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
+      <div><div className="wlbl">Evenements</div><span style={gT(c1,c2,48)}>{upcoming.length}</span><span style={{fontSize:13,fontWeight:700,color:'var(--t3)',marginLeft:6}}>a venir</span></div>
+      <button onClick={()=>onNav('cal')} style={{background:`rgba(${hex2rgb(c1)},.18)`,border:'none',borderRadius:10,padding:'5px 10px',color:c1,fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",marginTop:2}}>Voir tout</button>
+    </div>
+    {shown.length===0?<div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Aucun evenement a venir</div>
+    :shown.map(e=>{const isT=e.date===td;const d=parseISO(e.date);const lbl=isT?"Aujourd'hui":d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      return(<div key={e.id} style={{display:'flex',gap:10,marginBottom:9,alignItems:'center'}}>
+        <div style={{width:3,height:32,borderRadius:2,background:e.col,flexShrink:0}}/>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:700,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{e.title}</div>
+          <div style={{fontSize:11,fontWeight:600,color:'var(--t3)'}}>{lbl}{e.st?` · ${e.st}`:''}</div>
         </div>
-        <button onClick={()=>onNav('cal')} style={{background:`rgba(${hex2rgb(c1)},.18)`,border:'none',borderRadius:10,padding:'5px 10px',color:c1,fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",marginTop:2}}>Voir tout</button>
-      </div>
-      {shown.length===0
-        ? <div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Aucun evenement a venir</div>
-        : shown.map(e=>{
-            const isT=e.date===td;
-            const d=parseISO(e.date);
-            const lbl=isT?"Aujourd'hui":d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-            return (
-              <div key={e.id} style={{display:'flex',gap:10,marginBottom:9,alignItems:'center'}}>
-                <div style={{width:3,height:32,borderRadius:2,background:e.col,flexShrink:0}}/>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:700,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{e.title}</div>
-                  <div style={{fontSize:11,fontWeight:600,color:'var(--t3)'}}>{lbl}{e.st?` · ${e.st}`:''}</div>
-                </div>
-              </div>
-            );
-          })
-      }
-    </div>
-  );
+      </div>);
+    })}
+  </div>);
 }
 
-/* ── REMINDERS ── */
+/* ══ REMINDERS WIDGET ══ */
 const PRI_C=[null,'#30d158','#ff9f0a','#ff453a'];
-function RemsWidget({onNav}) {
-  const items   = ls.get('ut3_ritems',[]);
-  const td      = todayISO();
-  const today   = items.filter(r=>r.dd===td&&!r.done);
-  const overdue = items.filter(r=>r.dd&&r.dd<td&&!r.done);
-  const [c1,c2] = WC.rems;
-
-  return (
-    <div style={{padding:'16px 18px'}}>
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
-        <div>
-          <div className="wlbl">Rappels</div>
-          <span style={gT(c1,c2,48)}>{today.length}</span>
-          <span style={{fontSize:13,fontWeight:700,color:'var(--t3)',marginLeft:6}}>aujourd'hui</span>
-        </div>
-        <button onClick={()=>onNav('rem')} style={{background:`rgba(${hex2rgb(c1)},.18)`,border:'none',borderRadius:10,padding:'5px 10px',color:c1,fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",marginTop:2}}>Voir tout</button>
-      </div>
-      {overdue.length>0&&<div style={{fontSize:11,fontWeight:800,color:'#ff453a',marginBottom:8,letterSpacing:'.04em',textTransform:'uppercase'}}>{overdue.length} EN RETARD</div>}
-      {today.length===0&&overdue.length===0
-        ? <div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Rien pour aujourd'hui</div>
-        : today.slice(0,4).map(r=>(
-            <div key={r.id} style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
-              <div style={{width:8,height:8,borderRadius:4,background:r.pri>0?PRI_C[r.pri]:c1,flexShrink:0}}/>
-              <div style={{flex:1,fontSize:14,fontWeight:600,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.title}</div>
-            </div>
-          ))
-      }
+function RemsWidget({onNav}){
+  const items=ls.get('ut3_ritems',[]);const td=todayISO();
+  const today=items.filter(r=>r.dd===td&&!r.done);const overdue=items.filter(r=>r.dd&&r.dd<td&&!r.done);
+  const [c1,c2]=WC.rems;
+  return(<div style={{padding:'16px 18px'}}>
+    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
+      <div><div className="wlbl">Rappels</div><span style={gT(c1,c2,48)}>{today.length}</span><span style={{fontSize:13,fontWeight:700,color:'var(--t3)',marginLeft:6}}>aujourd'hui</span></div>
+      <button onClick={()=>onNav('rem')} style={{background:`rgba(${hex2rgb(c1)},.18)`,border:'none',borderRadius:10,padding:'5px 10px',color:c1,fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",marginTop:2}}>Voir tout</button>
     </div>
-  );
+    {overdue.length>0&&<div style={{fontSize:11,fontWeight:800,color:'#ff453a',marginBottom:8,letterSpacing:'.04em',textTransform:'uppercase'}}>{overdue.length} EN RETARD</div>}
+    {today.length===0&&overdue.length===0?<div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Rien pour aujourd'hui</div>
+    :today.slice(0,4).map(r=>(<div key={r.id} style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+      <div style={{width:8,height:8,borderRadius:4,background:r.pri>0?PRI_C[r.pri]:c1,flexShrink:0}}/>
+      <div style={{flex:1,fontSize:14,fontWeight:600,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.title}</div>
+    </div>))}
+  </div>);
 }
 
-/* ── NOTES ── */
-function NotesWidget({onNav}) {
-  const notes = ls.get('ut3_notes',[]);
-  const [c1,c2] = WC.notes;
-  return (
-    <div style={{padding:'16px 18px'}}>
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
-        <div>
-          <div className="wlbl">Notes</div>
-          <span style={gT(c1,c2,48)}>{notes.length}</span>
-          <span style={{fontSize:13,fontWeight:700,color:'var(--t3)',marginLeft:6}}>note{notes.length!==1?'s':''}</span>
-        </div>
-        <button onClick={()=>onNav('notes')} style={{background:`rgba(${hex2rgb(c1)},.18)`,border:'none',borderRadius:10,padding:'5px 10px',color:c1,fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",marginTop:2}}>Voir tout</button>
-      </div>
-      {notes.length===0
-        ? <div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Aucune note</div>
-        : notes.slice(0,3).map((n,i)=>(
-            <div key={n.id} style={{marginBottom:i<2?10:0,paddingBottom:i<2?10:0,borderBottom:i<2?'1px solid var(--bdr)':undefined}}>
-              <div style={{fontSize:14,fontWeight:700,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{n.title}</div>
-              <div style={{fontSize:11,fontWeight:600,color:'var(--t3)',marginTop:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{n.body||'Aucun texte'}</div>
-            </div>
-          ))
-      }
+/* ══ NOTES WIDGET ══ */
+function NotesWidget({onNav}){
+  const notes=ls.get('ut3_notes',[]);const [c1,c2]=WC.notes;
+  return(<div style={{padding:'16px 18px'}}>
+    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
+      <div><div className="wlbl">Notes</div><span style={gT(c1,c2,48)}>{notes.length}</span><span style={{fontSize:13,fontWeight:700,color:'var(--t3)',marginLeft:6}}>note{notes.length!==1?'s':''}</span></div>
+      <button onClick={()=>onNav('notes')} style={{background:`rgba(${hex2rgb(c1)},.18)`,border:'none',borderRadius:10,padding:'5px 10px',color:c1,fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",marginTop:2}}>Voir tout</button>
     </div>
-  );
+    {notes.length===0?<div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Aucune note</div>
+    :notes.slice(0,3).map((n,i)=>(<div key={n.id} style={{marginBottom:i<2?10:0,paddingBottom:i<2?10:0,borderBottom:i<2?'1px solid var(--bdr)':undefined}}>
+      <div style={{fontSize:14,fontWeight:700,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{n.title}</div>
+      <div style={{fontSize:11,fontWeight:600,color:'var(--t3)',marginTop:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{n.body||'Aucun texte'}</div>
+    </div>))}
+  </div>);
 }
 
-/* ── CHRONO ── */
-function ChronoWidget() {
-  const [running,setRunning]=useState(false);
-  const [elapsed,setElapsed]=useState(0);
-  const startRef=useRef(null), savedRef=useRef(0);
-  const [c1,c2]=WC.chrono;
-
-  useEffect(()=>{
-    if(!running)return;
-    const t=setInterval(()=>setElapsed(savedRef.current+Date.now()-startRef.current),50);
-    return()=>clearInterval(t);
-  },[running]);
-
+/* ══ CHRONO WIDGET (home, independant) ══ */
+function ChronoWidget(){
+  const [running,setRunning]=useState(false);const [elapsed,setElapsed]=useState(0);
+  const startRef=useRef(null);const savedRef=useRef(0);const [c1,c2]=WC.chrono;
+  useEffect(()=>{if(!running)return;const t=setInterval(()=>setElapsed(savedRef.current+Date.now()-startRef.current),50);return()=>clearInterval(t);},[running]);
   const toggle=()=>{if(running){savedRef.current=elapsed;}else{startRef.current=Date.now();}setRunning(v=>!v);};
   const reset=()=>{setRunning(false);setElapsed(0);savedRef.current=0;};
-  const pad=n=>String(n).padStart(2,'0');
-  const cs=Math.floor((elapsed%1000)/10), ss=Math.floor(elapsed/1000)%60, mm=Math.floor(elapsed/60000)%60;
-
-  return (
-    <div style={{padding:'16px 16px'}}>
-      <div className="wlbl">Chrono</div>
-      <div style={{marginBottom:14}}>
-        <span style={gT(c1,c2,40)}>{pad(mm)}:{pad(ss)}</span>
-        <span style={{...gT(c1,c2,18),opacity:.55}}>:{pad(cs)}</span>
-      </div>
-      <div style={{display:'flex',gap:7}}>
-        <button onClick={toggle} style={{
-          flex:1,
-          background: running ? `rgba(${hex2rgb('#ff4757')},.2)` : `rgba(${hex2rgb(c1)},.2)`,
-          border:'none',borderRadius:12,padding:'8px 6px',
-          color:running?'#ff4757':c1,
-          fontSize:12,fontWeight:800,cursor:'pointer',
-          fontFamily:"'Nunito',sans-serif",letterSpacing:'.02em',
-        }}>
-          {running?'Pause':elapsed>0?'Reprendre':'Start'}
-        </button>
-        {elapsed>0&&<button onClick={reset} style={{background:'rgba(255,255,255,.07)',border:'none',borderRadius:12,padding:'8px 10px',color:'var(--t3)',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>Reset</button>}
-      </div>
+  const cs=Math.floor((elapsed%1000)/10),ss=Math.floor(elapsed/1000)%60,mm=Math.floor(elapsed/60000)%60;
+  return(<div style={{padding:'16px'}}>
+    <div className="wlbl">Chrono</div>
+    <div style={{marginBottom:14}}><span style={gT(c1,c2,40)}>{pad2(mm)}:{pad2(ss)}</span><span style={{...gT(c1,c2,18),opacity:.55}}>:{pad2(cs)}</span></div>
+    <div style={{display:'flex',gap:7}}>
+      <button onClick={toggle} style={{flex:1,background:running?`rgba(${hex2rgb('#ff4757')},.2)`:`rgba(${hex2rgb(c1)},.2)`,border:'none',borderRadius:12,padding:'8px 6px',color:running?'#ff4757':c1,fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>{running?'Pause':elapsed>0?'Reprendre':'Start'}</button>
+      {elapsed>0&&<button onClick={reset} style={{background:'rgba(255,255,255,.07)',border:'none',borderRadius:12,padding:'8px 10px',color:'var(--t3)',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>Reset</button>}
     </div>
-  );
+  </div>);
 }
 
-/* ── QUOTE ── */
-const QUOTES=[
-  {q:"Le seul moyen de faire du bon travail, c'est d'aimer ce qu'on fait.",a:"Steve Jobs"},
-  {q:"La vie, c'est ce qui arrive pendant qu'on fait d'autres projets.",a:"John Lennon"},
-  {q:"Ce qui ne te tue pas te rend plus fort.",a:"Friedrich Nietzsche"},
-  {q:"La simplicite est la sophistication supreme.",a:"Leonardo da Vinci"},
-  {q:"La creativite, c'est l'intelligence qui s'amuse.",a:"Albert Einstein"},
-  {q:"Le succes est la somme de petits efforts repetes jour apres jour.",a:"Robert Collier"},
-  {q:"La discipline est le pont entre les objectifs et les accomplissements.",a:"Jim Rohn"},
-  {q:"Ne comptez pas les jours, faites que les jours comptent.",a:"Muhammad Ali"},
-  {q:"Le moment pour planter un arbre etait il y a 20 ans. Le deuxieme meilleur, c'est maintenant.",a:"Proverbe"},
-  {q:"Tout ce que vous pouvez imaginer est reel.",a:"Pablo Picasso"},
-  {q:"La seule limite a nos accomplissements de demain ce sont nos doutes d'aujourd'hui.",a:"F.D. Roosevelt"},
-  {q:"L'imagination est plus importante que le savoir.",a:"Albert Einstein"},
-  {q:"Dormez peu, apprenez beaucoup, agissez toujours.",a:"Anonyme"},
-  {q:"Les grandes choses ne sont jamais faites par une seule personne.",a:"Steve Jobs"},
-  {q:"Le succes appartient a ceux qui osent.",a:"Proverbe"},
-];
-
-function QuoteWidget() {
-  const q = QUOTES[Math.floor(Date.now()/86400000) % QUOTES.length];
-  const [c1,c2] = WC.quote;
-  return (
-    <div style={{padding:'18px 20px'}}>
-      <div className="wlbl">Citation du jour</div>
-      <div style={{
-        fontSize:15, fontStyle:'italic', lineHeight:1.65, marginBottom:12,
-        background:`linear-gradient(135deg, ${c1}, ${c2})`,
-        WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-        fontWeight:700,
-      }}>
-        "{q.q}"
+/* ══ LIVE ACTIVITY WIDGET ══ */
+function LiveActivityWidget({onNav}){
+  const [live,setLive]=useState(window.__utLive);
+  useEffect(()=>{const t=setInterval(()=>setLive({...window.__utLive}),200);return()=>clearInterval(t);},[]);
+  const [c1,c2]=WC.live;const [tc1,tc2]=['#fd79a8','#e84393'];
+  const openBtn=(col)=><button onClick={()=>onNav('timer')} style={{background:`rgba(${hex2rgb(col)},.18)`,border:'none',borderRadius:10,padding:'5px 12px',color:col,fontSize:11,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",marginTop:8}}>Ouvrir</button>;
+  if(!live||(!live.type)){return(<div style={{padding:'16px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:6,textAlign:'center'}}>
+    <div className="wlbl" style={{marginBottom:0}}>En cours</div>
+    <div style={{fontSize:11,color:'var(--t3)',fontWeight:600}}>Aucune activite</div>
+    {openBtn(c1)}
+  </div>);}
+  if(live.type==='chrono'){
+    const elapsed=live.running?live.saved+Date.now()-live.startTime:live.saved;
+    const mm=Math.floor(elapsed/60000)%60,ss=Math.floor(elapsed/1000)%60;
+    return(<div style={{padding:'14px 16px'}}>
+      <div className="wlbl">Chrono actif</div>
+      <div><span style={gT(c1,c2,42)}>{pad2(mm)}:{pad2(ss)}</span></div>
+      {openBtn(c1)}
+    </div>);
+  }
+  if(live.type==='timer'){
+    const remaining=live.running?Math.max(0,live.endTime-Date.now()):live.savedRemaining;
+    const progress=Math.max(0,remaining/live.total);
+    const mm=Math.floor(remaining/60000),ss=Math.floor((remaining%60000)/1000);
+    const R=30,CIRC=2*Math.PI*R;
+    return(<div style={{padding:'12px 16px',display:'flex',flexDirection:'column',alignItems:'center'}}>
+      <div className="wlbl" style={{alignSelf:'flex-start'}}>Minuteur</div>
+      <div style={{position:'relative',width:80,height:80}}>
+        <svg width={80} height={80} viewBox="0 0 80 80">
+          <circle cx={40} cy={40} r={R} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth={7}/>
+          <circle cx={40} cy={40} r={R} fill="none" stroke={tc1} strokeWidth={7} strokeLinecap="round"
+            strokeDasharray={CIRC} strokeDashoffset={CIRC*(1-progress)} transform="rotate(-90 40 40)"
+            style={{transition:'stroke-dashoffset .15s linear'}}/>
+        </svg>
+        <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',...gT(tc1,tc2,16)}}>{pad2(mm)}:{pad2(ss)}</div>
       </div>
-      <div style={{fontSize:12,fontWeight:800,color:c1,letterSpacing:'.02em'}}>— {q.a}</div>
-    </div>
-  );
+      {openBtn(tc1)}
+    </div>);
+  }
+  return null;
 }
 
-/* ── WIDGET CARD (applies tint + glow per type) ── */
-function WidgetCard({w, onNav}) {
-  const colors = WC[w.type] || WC.clock;
-  const s = tint(colors[0], colors[1]);
+/* ══ STOCKS WIDGET ══ */
+const DEF_TICKERS=['AF.PA','^FCHI','AAPL'];
+function StocksWidget(){
+  const [data,setData]=useState(()=>{const c=ls.get('ut6_stocks_data',null);return c&&Date.now()-c.ts<300000?c.stocks:null;});
+  const [loading,setLoading]=useState(false);
+  const [c1,c2]=WC.stocks;
+  const fetch_=async()=>{
+    setLoading(true);
+    try{
+      const results=await Promise.all(DEF_TICKERS.map(async sym=>{
+        const url=`https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=2d`)}`;
+        const r=await window.fetch(url);const d=await r.json();
+        const meta=JSON.parse(d.contents).chart.result[0].meta;
+        return{sym,name:meta.shortName||sym,price:meta.regularMarketPrice,prev:meta.previousClose,currency:meta.currency};
+      }));
+      setData(results);ls.set('ut6_stocks_data',{stocks:results,ts:Date.now()});
+    }catch{}
+    setLoading(false);
+  };
+  useEffect(()=>{if(!data)fetch_();const t=setInterval(fetch_,300000);return()=>clearInterval(t);},[]);
+  return(<div style={{padding:'14px 18px'}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+      <div className="wlbl" style={{marginBottom:0}}>Bourse</div>
+      <button onClick={fetch_} style={{background:'none',border:'none',color:'var(--t3)',fontSize:9,fontWeight:700,cursor:'pointer',letterSpacing:'.06em',textTransform:'uppercase',fontFamily:'inherit'}}>Actualiser</button>
+    </div>
+    {loading&&!data?<div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Chargement...</div>
+    :data?data.map(s=>{const diff=s.price-s.prev;const pct=(diff/s.prev)*100;const up=diff>=0;const col=up?'#30d158':'#ff453a';
+      return(<div key={s.sym} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:9}}>
+        <div><div style={{fontSize:13,fontWeight:800}}>{s.sym}</div><div style={{fontSize:10,color:'var(--t3)',fontWeight:600,maxWidth:110,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{s.name}</div></div>
+        <div style={{textAlign:'right'}}>
+          <div style={gT(up?c1:'#ff453a',up?c2:'#ff6b81',18)}>{s.price?.toFixed(2)}</div>
+          <div style={{fontSize:10,fontWeight:700,color:col}}>{up?'+':''}{diff?.toFixed(2)} ({up?'+':''}{pct?.toFixed(2)}%)</div>
+        </div>
+      </div>);
+    }):<div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>Indisponible</div>}
+  </div>);
+}
+
+/* ══ QUOTE ══ */
+const QUOTES=[{q:"Le seul moyen de faire du bon travail c'est d'aimer ce qu'on fait.",a:"Steve Jobs"},{q:"La vie c'est ce qui arrive pendant qu'on fait d'autres projets.",a:"John Lennon"},{q:"Ce qui ne te tue pas te rend plus fort.",a:"Nietzsche"},{q:"La simplicite est la sophistication supreme.",a:"Leonardo da Vinci"},{q:"La creativite c'est l'intelligence qui s'amuse.",a:"Einstein"},{q:"Le succes est la somme de petits efforts repetes jour apres jour.",a:"R. Collier"},{q:"La discipline est le pont entre les objectifs et les accomplissements.",a:"Jim Rohn"},{q:"Ne comptez pas les jours faites que les jours comptent.",a:"Muhammad Ali"},{q:"L'imagination est plus importante que le savoir.",a:"Einstein"},{q:"Le succes appartient a ceux qui osent.",a:"Proverbe"}];
+function QuoteWidget(){const q=QUOTES[Math.floor(Date.now()/86400000)%QUOTES.length];const [c1,c2]=WC.quote;return(<div style={{padding:'18px 20px'}}><div className="wlbl">Citation du jour</div><div style={{fontSize:15,fontStyle:'italic',lineHeight:1.65,marginBottom:12,background:`linear-gradient(135deg,${c1},${c2})`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',fontWeight:700}}>"{q.q}"</div><div style={{fontSize:12,fontWeight:800,color:c1}}>— {q.a}</div></div>);}
+
+/* ══ WIDGET CARD ══ */
+function WidgetCard({w,onNav}){
+  const colors=WC[w.type]||WC.clock;const s=tint(colors[0],colors[1]);
   switch(w.type){
-    case 'clock':  return <div style={s}><ClockWidget/></div>;
-    case 'wx':     return <div style={s}><WeatherWidget/></div>;
-    case 'events': return <div style={s}><EventsWidget onNav={onNav}/></div>;
-    case 'rems':   return <div style={s}><RemsWidget onNav={onNav}/></div>;
-    case 'notes':  return <div style={s}><NotesWidget onNav={onNav}/></div>;
-    case 'chrono': return <div style={s}><ChronoWidget/></div>;
-    case 'quote':  return <div style={s}><QuoteWidget/></div>;
-    default: return <div style={{...s,padding:'20px',color:'var(--t3)',fontSize:13}}>Widget inconnu</div>;
+    case'clock':  return<div style={s}><ClockWidget/></div>;
+    case'wx':     return<div style={s}><WeatherWidget/></div>;
+    case'events': return<div style={s}><EventsWidget onNav={onNav}/></div>;
+    case'rems':   return<div style={s}><RemsWidget onNav={onNav}/></div>;
+    case'notes':  return<div style={s}><NotesWidget onNav={onNav}/></div>;
+    case'chrono': return<div style={s}><ChronoWidget/></div>;
+    case'live':   return<div style={s}><LiveActivityWidget onNav={onNav}/></div>;
+    case'stocks': return<div style={s}><StocksWidget/></div>;
+    case'quote':  return<div style={s}><QuoteWidget/></div>;
+    default:return<div style={{...s,padding:'20px',color:'var(--t3)',fontSize:13}}>Widget inconnu</div>;
   }
 }
 
-/* ── WIDGET PICKER ── */
-function WidgetPicker({onAdd,onClose}) {
-  return (
-    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="sheet">
-        <div className="sheet-header">
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <h2 style={{fontSize:20,fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>Widgets</h2>
-            <XBtn onClick={onClose}/>
-          </div>
-        </div>
-        <div className="sheet-body">
-          <div style={{display:'flex',flexDirection:'column',gap:2,borderRadius:16,overflow:'hidden',border:'1px solid var(--bdr)'}}>
-            {WIDGET_CATALOG.map((t,i)=>{
-              const [c1] = WC[t.type]||WC.clock;
-              return (
-                <div key={t.type} onClick={()=>onAdd(t)}
-                  style={{background:'var(--card)',padding:'13px 16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',borderBottom:i<WIDGET_CATALOG.length-1?'1px solid var(--bdr)':'none'}}>
-                  <div style={{width:40,height:40,borderRadius:14,background:`rgba(${hex2rgb(c1)},.18)`,display:'flex',alignItems:'center',justifyContent:'center',color:c1,flexShrink:0}}>
-                    <Ico d={t.ico} size={18}/>
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:15,fontWeight:800}}>{t.name}</div>
-                    <div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{t.desc} · {t.size==='wide'?'Large':'Compact'}</div>
-                  </div>
-                  <Ico d={I.plus} size={16} col={c1}/>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+/* ══ WIDGET PICKER ══ */
+function WidgetPicker({onAdd,onClose}){
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="sheet">
+      <div className="sheet-header"><div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><h2 style={{fontSize:20,fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>Widgets</h2><XBtn onClick={onClose}/></div></div>
+      <div className="sheet-body"><div style={{display:'flex',flexDirection:'column',gap:2,borderRadius:16,overflow:'hidden',border:'1px solid var(--bdr)'}}>
+        {WIDGET_CATALOG.map((t,i)=>{const [c1]=WC[t.type]||WC.clock;return(
+          <div key={t.type} onClick={()=>onAdd(t)} style={{background:'var(--card)',padding:'13px 16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',borderBottom:i<WIDGET_CATALOG.length-1?'1px solid var(--bdr)':'none'}}>
+            <div style={{width:40,height:40,borderRadius:14,background:`rgba(${hex2rgb(c1)},.18)`,display:'flex',alignItems:'center',justifyContent:'center',color:c1,flexShrink:0}}><Ico d={t.ico} size={18}/></div>
+            <div style={{flex:1}}><div style={{fontSize:15,fontWeight:800}}>{t.name}</div><div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{t.desc} · {t.size==='wide'?'Large':'Compact'}</div></div>
+            <Ico d={I.plus} size={16} col={c1}/>
+          </div>);
+        })}
+      </div></div>
     </div>
-  );
+  </div>);
 }
 
-/* ── HOME MODULE ── */
-function HomeModule({ onNav, onSettings }) {
-  const [layout,  setLayout]  = useState(()=>ls.get('ut4_layout',DEF_LAYOUT));
-  const [editing, setEditing] = useState(false);
-  const [picker,  setPicker]  = useState(false);
-  const name = ls.get('ut4_name','Leo');
-
+/* ══ HOME MODULE ══ */
+function HomeModule({onNav,onSettings}){
+  const [layout,setLayout]=useState(()=>ls.get('ut4_layout',DEF_LAYOUT));
+  const [editing,setEditing]=useState(false);const [picker,setPicker]=useState(false);
+  const name=ls.get('ut4_name','Leo');
   useEffect(()=>ls.set('ut4_layout',layout),[layout]);
-
-  const moveUp   = id => setLayout(p=>{const a=[...p],i=a.findIndex(w=>w.id===id);if(i>0){[a[i-1],a[i]]=[a[i],a[i-1]];}return a;});
-  const moveDown = id => setLayout(p=>{const a=[...p],i=a.findIndex(w=>w.id===id);if(i<a.length-1){[a[i],a[i+1]]=[a[i+1],a[i]];}return a;});
-  const remove   = id => setLayout(p=>p.filter(w=>w.id!==id));
-  const addW     = t  => {setLayout(p=>[...p,{id:mkId(),type:t.type,size:t.size}]);setPicker(false);};
-
-  const now = new Date();
-  const h   = now.getHours();
-  const greeting = h<5?'Bonne nuit':h<12?'Bonjour':h<18?'Bon apres-midi':'Bonsoir';
-
-  return (
-    <div className="page" style={{padding:'24px 18px 0'}}>
-      {/* Header — Not Boring dramatic style */}
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:24}}>
-        <div>
-          <div style={{fontSize:10,fontWeight:800,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--t3)',marginBottom:6}}>
-            {now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
-          </div>
-          <div style={{fontFamily:"'Nunito',sans-serif",lineHeight:1.05}}>
-            <div style={{fontSize:34,fontWeight:800,color:'var(--t1)'}}>{greeting},</div>
-            <div style={{
-              fontSize:34, fontWeight:900,
-              background:'linear-gradient(135deg, #ff9f43, #a29bfe)',
-              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-              display:'inline-block',
-            }}>{name}</div>
-          </div>
-        </div>
-        <div style={{display:'flex',gap:8,marginTop:4}}>
-          <IcoBtn
-            onClick={()=>setEditing(v=>!v)}
-            style={{background:editing?'rgba(var(--acc-rgb),.2)':undefined, outline:editing?'2px solid var(--acc)':undefined, outlineOffset:1}}>
-            {editing ? <Ico d={I.chk} size={16} sw={2.5} col="var(--acc)"/> : <Ico d={I.edit} size={16}/>}
-          </IcoBtn>
-          <IcoBtn onClick={onSettings}><Ico d={I.gear} size={16}/></IcoBtn>
+  const moveUp=id=>setLayout(p=>{const a=[...p],i=a.findIndex(w=>w.id===id);if(i>0){[a[i-1],a[i]]=[a[i],a[i-1]];}return a;});
+  const moveDown=id=>setLayout(p=>{const a=[...p],i=a.findIndex(w=>w.id===id);if(i<a.length-1){[a[i],a[i+1]]=[a[i+1],a[i]];}return a;});
+  const remove=id=>setLayout(p=>p.filter(w=>w.id!==id));
+  const addW=t=>{setLayout(p=>[...p,{id:mkId(),type:t.type,size:t.size}]);setPicker(false);};
+  const now=new Date();const h=now.getHours();
+  const greeting=h<5?'Bonne nuit':h<12?'Bonjour':h<18?'Bon apres-midi':'Bonsoir';
+  return(<div className="page" style={{padding:'24px 18px 0'}}>
+    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:24}}>
+      <div>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--t3)',marginBottom:6}}>{now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div style={{fontFamily:"'Nunito',sans-serif",lineHeight:1.05}}>
+          <div style={{fontSize:34,fontWeight:800,color:'var(--t1)'}}>{greeting},</div>
+          <div style={{fontSize:34,fontWeight:900,background:'linear-gradient(135deg,#ff9f43,#a29bfe)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',display:'inline-block'}}>{name}</div>
         </div>
       </div>
-
-      {/* Widget grid */}
-      <div className="w-grid">
-        {layout.map((w,idx)=>(
-          <div key={w.id} className={w.size==='wide'?'w-wide':'w-half'} style={{position:'relative'}}>
-            <WidgetCard w={w} onNav={onNav}/>
-            {editing&&(
-              <>
-                <div className="w-edit-overlay"/>
-                <div className="w-edit-btns">
-                  {idx>0&&<button className="w-edit-btn" onClick={()=>moveUp(w.id)} style={{background:'rgba(20,20,35,.85)'}}><Ico d={I.arrU} size={11} sw={2.5}/></button>}
-                  {idx<layout.length-1&&<button className="w-edit-btn" onClick={()=>moveDown(w.id)} style={{background:'rgba(20,20,35,.85)'}}><Ico d={I.arrD} size={11} sw={2.5}/></button>}
-                  <button className="w-edit-btn" onClick={()=>remove(w.id)} style={{background:'rgba(200,40,40,.85)'}}><Ico d={I.x} size={11} sw={2.5}/></button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-        {editing&&(
-          <div className="w-wide" onClick={()=>setPicker(true)}
-            style={{borderRadius:22,border:'2px dashed rgba(var(--acc-rgb),.35)',padding:'20px',display:'flex',alignItems:'center',justifyContent:'center',gap:10,cursor:'pointer',color:'var(--acc)',fontSize:14,fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>
-            <Ico d={I.plus} size={17} sw={2.5}/>Ajouter un widget
-          </div>
-        )}
+      <div style={{display:'flex',gap:8,marginTop:4}}>
+        <IcoBtn onClick={()=>setEditing(v=>!v)} style={{background:editing?'rgba(var(--acc-rgb),.2)':undefined,outline:editing?'2px solid var(--acc)':undefined,outlineOffset:1}}>
+          {editing?<Ico d={I.chk} size={16} sw={2.5} col="var(--acc)"/>:<Ico d={I.edit} size={16}/>}
+        </IcoBtn>
+        <IcoBtn onClick={onSettings}><Ico d={I.gear} size={16}/></IcoBtn>
       </div>
-      {picker&&<WidgetPicker onAdd={addW} onClose={()=>setPicker(false)}/>}
     </div>
-  );
+    <div className="w-grid">
+      {layout.map((w,idx)=>(<div key={w.id} className={w.size==='wide'?'w-wide':'w-half'} style={{position:'relative'}}>
+        <WidgetCard w={w} onNav={onNav}/>
+        {editing&&(<><div className="w-edit-overlay"/><div className="w-edit-btns">
+          {idx>0&&<button className="w-edit-btn" onClick={()=>moveUp(w.id)} style={{background:'rgba(20,20,35,.85)'}}><Ico d={I.arrU} size={11} sw={2.5}/></button>}
+          {idx<layout.length-1&&<button className="w-edit-btn" onClick={()=>moveDown(w.id)} style={{background:'rgba(20,20,35,.85)'}}><Ico d={I.arrD} size={11} sw={2.5}/></button>}
+          <button className="w-edit-btn" onClick={()=>remove(w.id)} style={{background:'rgba(200,40,40,.85)'}}><Ico d={I.x} size={11} sw={2.5}/></button>
+        </div></>)}
+      </div>))}
+      {editing&&(<div className="w-wide" onClick={()=>setPicker(true)} style={{borderRadius:22,border:'2px dashed rgba(var(--acc-rgb),.35)',padding:'20px',display:'flex',alignItems:'center',justifyContent:'center',gap:10,cursor:'pointer',color:'var(--acc)',fontSize:14,fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>
+        <Ico d={I.plus} size={17} sw={2.5}/>Ajouter un widget
+      </div>)}
+    </div>
+    {picker&&<WidgetPicker onAdd={addW} onClose={()=>setPicker(false)}/>}
+  </div>);
 }
 
 /* ══════════════════════════════════════
@@ -720,149 +468,92 @@ function HomeModule({ onNav, onSettings }) {
 const EVT_COLORS=['#7c5cfc','#0a84ff','#30d158','#ff9f0a','#ff375f','#64d2ff','#ac8e68','#ff6961'];
 const MONTHS=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
 const D_SH=['L','M','M','J','V','S','D'];
-const ALERTS=[{v:'none',l:'Aucune'},{v:'0',l:'Au moment'},{v:'5',l:'5 min avant'},{v:'10',l:'10 min avant'},{v:'15',l:'15 min avant'},{v:'30',l:'30 min avant'},{v:'60',l:'1h avant'},{v:'120',l:'2h avant'},{v:'1440',l:'1 jour avant'}];
-const TRAVEL=[{v:'none',l:'Aucun'},{v:'5',l:'5 min'},{v:'15',l:'15 min'},{v:'30',l:'30 min'},{v:'45',l:'45 min'},{v:'60',l:'1 heure'}];
+const ALERTS=[{v:'none',l:'Aucune'},{v:'0',l:'Au moment'},{v:'5',l:'5 min avant'},{v:'10',l:'10 min avant'},{v:'15',l:'15 min avant'},{v:'30',l:'30 min avant'},{v:'60',l:'1h avant'},{v:'1440',l:'1 jour avant'}];
+const TRAVEL=[{v:'none',l:'Aucun'},{v:'5',l:'5 min'},{v:'15',l:'15 min'},{v:'30',l:'30 min'},{v:'60',l:'1 heure'}];
 const REPEAT=[{v:'none',l:'Jamais'},{v:'day',l:'Chaque jour'},{v:'week',l:'Chaque semaine'},{v:'month',l:'Chaque mois'},{v:'year',l:'Chaque annee'}];
-
-function scheduleAlert(evt){
-  if(!evt.alert||evt.alert==='none'||!('Notification' in window)||Notification.permission!=='granted')return;
-  if(evt.allDay)return;
-  const dt=new Date(`${evt.date}T${evt.st||'00:00'}:00`);
-  const delay=dt.getTime()-parseInt(evt.alert)*60000-Date.now();
-  if(delay>0&&delay<86400000)setTimeout(()=>new Notification(`Rappel : ${evt.title}`,{body:evt.alert==='0'?'Maintenant':`Dans ${ALERTS.find(a=>a.v===evt.alert)?.l||''}`,silent:false}),delay);
-}
-
+function scheduleAlert(evt){if(!evt.alert||evt.alert==='none'||!('Notification'in window)||Notification.permission!=='granted')return;if(evt.allDay)return;const dt=new Date(`${evt.date}T${evt.st||'00:00'}:00`);const delay=dt.getTime()-parseInt(evt.alert)*60000-Date.now();if(delay>0&&delay<86400000)setTimeout(()=>new Notification(`Rappel : ${evt.title}`,{body:ALERTS.find(a=>a.v===evt.alert)?.l||'',silent:false}),delay);}
 function CalendarModule(){
   const td=todayISO(),now=new Date();
   const [cur,setCur]=useState(new Date(now.getFullYear(),now.getMonth(),1));
-  const [sel,setSel]=useState(td);
-  const [evts,setEvts]=useState(()=>ls.get('ut3_evts',{}));
-  const [modal,setModal]=useState(false);
-  const [editE,setEditE]=useState(null);
+  const [sel,setSel]=useState(td);const [evts,setEvts]=useState(()=>ls.get('ut3_evts',{}));
+  const [modal,setModal]=useState(false);const [editE,setEditE]=useState(null);
   useEffect(()=>ls.set('ut3_evts',evts),[evts]);
-
   const y=cur.getFullYear(),m=cur.getMonth();
-  const fdow=(new Date(y,m,1).getDay()+6)%7;
-  const dim=new Date(y,m+1,0).getDate(),dipm=new Date(y,m,0).getDate();
+  const fdow=(new Date(y,m,1).getDay()+6)%7;const dim=new Date(y,m+1,0).getDate();const dipm=new Date(y,m,0).getDate();
   const cells=[];
-  for(let i=fdow-1;i>=0;i--) cells.push({d:dipm-i,t:'p',dt:dateISO(new Date(y,m-1,dipm-i))});
-  for(let d=1;d<=dim;d++)     cells.push({d,t:'c',dt:dateISO(new Date(y,m,d))});
-  while(cells.length<42)      cells.push({d:cells.length-fdow-dim+1,t:'n',dt:dateISO(new Date(y,m+1,cells.length-fdow-dim+1))});
-
+  for(let i=fdow-1;i>=0;i--)cells.push({d:dipm-i,t:'p',dt:dateISO(new Date(y,m-1,dipm-i))});
+  for(let d=1;d<=dim;d++)cells.push({d,t:'c',dt:dateISO(new Date(y,m,d))});
+  while(cells.length<42)cells.push({d:cells.length-fdow-dim+1,t:'n',dt:dateISO(new Date(y,m+1,cells.length-fdow-dim+1))});
   const selEvts=evts[sel]||[];
-  const saveEvt=e=>{setEvts(prev=>{const list=(prev[e.date]||[]).filter(x=>x.id!==e.id);return {...prev,[e.date]:[...list,e].sort((a,b)=>(a.st||'').localeCompare(b.st||''))};});scheduleAlert(e);setModal(false);setEditE(null);};
+  const saveEvt=e=>{setEvts(prev=>{const list=(prev[e.date]||[]).filter(x=>x.id!==e.id);return{...prev,[e.date]:[...list,e].sort((a,b)=>(a.st||'').localeCompare(b.st||''))};});scheduleAlert(e);setModal(false);setEditE(null);};
   const delEvt=(dk,id)=>setEvts(prev=>{const l=(prev[dk]||[]).filter(x=>x.id!==id);const n={...prev};if(l.length===0)delete n[dk];else n[dk]=l;return n;});
   const selLbl=parseISO(sel).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   const isNow=m===now.getMonth()&&y===now.getFullYear();
-
-  return(
-    <div className="page" style={{padding:'22px 18px 0'}}>
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20}}>
-        <div>
-          <div style={{fontSize:12,fontWeight:700,letterSpacing:'.07em',color:'var(--t3)',marginBottom:3}}>{y}</div>
-          <h1 style={{fontSize:34,fontWeight:900,lineHeight:1,fontFamily:"'Nunito',sans-serif"}}>{MONTHS[m]}</h1>
-        </div>
-        <div style={{display:'flex',gap:8,marginTop:6}}>
-          <IcoBtn onClick={()=>setCur(new Date(y,m-1,1))}><Ico d={I.cl} size={15}/></IcoBtn>
-          <IcoBtn onClick={()=>setCur(new Date(y,m+1,1))}><Ico d={I.cr} size={15}/></IcoBtn>
-        </div>
-      </div>
-      {!isNow&&<button onClick={()=>{setCur(new Date(now.getFullYear(),now.getMonth(),1));setSel(td);}} style={{marginBottom:12,background:'rgba(var(--acc-rgb),.14)',border:'none',borderRadius:10,padding:'6px 14px',color:'var(--acc)',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Aujourd'hui</button>}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',marginBottom:4}}>
-        {D_SH.map((d,i)=><div key={i} style={{textAlign:'center',fontSize:11,fontWeight:700,color:'var(--t3)',padding:'3px 0',letterSpacing:'.05em'}}>{d}</div>)}
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:3}}>
-        {cells.map((c,i)=>{
-          const isT=c.dt===td,isSel=c.dt===sel&&c.t==='c',isG=c.t!=='c';
-          const hasE=(evts[c.dt]||[]).length>0;
-          return <div key={i} className={`cday ${isT?'today':isSel?'sel':isG?'grey':''}`} onClick={()=>c.t==='c'&&setSel(c.dt)}><span>{c.d}</span>{hasE&&<div className="cday-dot"/>}</div>;
-        })}
-      </div>
-      <div style={{marginTop:22}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-          <div style={{fontSize:13,fontWeight:700,color:'var(--t2)',textTransform:'capitalize'}}>{selLbl}</div>
-          <button onClick={()=>{setEditE(null);setModal(true);}} style={{display:'flex',alignItems:'center',gap:5,background:'var(--acc)',border:'none',borderRadius:10,padding:'6px 12px',color:'#fff',fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:'inherit',boxShadow:`0 3px 12px rgba(var(--acc-rgb),.35)`}}>
-            <Ico d={I.plus} size={12} sw={2.5}/> Ajouter
-          </button>
-        </div>
-        {selEvts.length===0
-          ?<div className="card" style={{padding:'26px 18px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>Aucun evenement</div>
-          :<div style={{display:'flex',flexDirection:'column',gap:8}}>
-            {selEvts.map(e=>(
-              <div key={e.id} className="card" style={{padding:'13px 15px',display:'flex',alignItems:'center',gap:12}}>
-                <div style={{width:3,height:e.loc?50:38,borderRadius:2,background:e.col,flexShrink:0}}/>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:15,fontWeight:700,color:'var(--t1)',marginBottom:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{e.title}</div>
-                  <div style={{fontSize:12,color:'var(--t3)'}}>{e.allDay?'Toute la journee':e.st+(e.et?' — '+e.et:'')}{e.travel&&e.travel!=='none'?` · Trajet ${TRAVEL.find(t=>t.v===e.travel)?.l||''}`:''}</div>
-                  {e.loc&&<div style={{fontSize:11,color:'var(--t3)',display:'flex',alignItems:'center',gap:3,marginTop:2}}><Ico d={I.pin} size={10}/>{e.loc}</div>}
-                </div>
-                <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                  <button onClick={()=>{setEditE(e);setModal(true);}} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.edit} size={15}/></button>
-                  <button onClick={()=>delEvt(sel,e.id)} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.del} size={15}/></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        }
-      </div>
-      {modal&&<EventModal init={editE} defDate={sel} onSave={saveEvt} onClose={()=>{setModal(false);setEditE(null);}}/>}
+  return(<div className="page" style={{padding:'22px 18px 0'}}>
+    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20}}>
+      <div><div style={{fontSize:12,fontWeight:700,letterSpacing:'.07em',color:'var(--t3)',marginBottom:3}}>{y}</div><h1 style={{fontSize:34,fontWeight:900,lineHeight:1,fontFamily:"'Nunito',sans-serif"}}>{MONTHS[m]}</h1></div>
+      <div style={{display:'flex',gap:8,marginTop:6}}><IcoBtn onClick={()=>setCur(new Date(y,m-1,1))}><Ico d={I.cl} size={15}/></IcoBtn><IcoBtn onClick={()=>setCur(new Date(y,m+1,1))}><Ico d={I.cr} size={15}/></IcoBtn></div>
     </div>
-  );
+    {!isNow&&<button onClick={()=>{setCur(new Date(now.getFullYear(),now.getMonth(),1));setSel(td);}} style={{marginBottom:12,background:'rgba(var(--acc-rgb),.14)',border:'none',borderRadius:10,padding:'6px 14px',color:'var(--acc)',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Aujourd'hui</button>}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',marginBottom:4}}>{D_SH.map((d,i)=><div key={i} style={{textAlign:'center',fontSize:11,fontWeight:700,color:'var(--t3)',padding:'3px 0'}}>{d}</div>)}</div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:3}}>
+      {cells.map((c,i)=>{const isT=c.dt===td,isSel=c.dt===sel&&c.t==='c',isG=c.t!=='c';const hasE=(evts[c.dt]||[]).length>0;
+        return<div key={i} className={`cday ${isT?'today':isSel?'sel':isG?'grey':''}`} onClick={()=>c.t==='c'&&setSel(c.dt)}><span>{c.d}</span>{hasE&&<div className="cday-dot"/>}</div>;})}
+    </div>
+    <div style={{marginTop:22}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+        <div style={{fontSize:13,fontWeight:700,color:'var(--t2)',textTransform:'capitalize'}}>{selLbl}</div>
+        <button onClick={()=>{setEditE(null);setModal(true);}} style={{display:'flex',alignItems:'center',gap:5,background:'var(--acc)',border:'none',borderRadius:10,padding:'6px 12px',color:'#fff',fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:'inherit',boxShadow:`0 3px 12px rgba(var(--acc-rgb),.35)`}}><Ico d={I.plus} size={12} sw={2.5}/> Ajouter</button>
+      </div>
+      {selEvts.length===0?<div className="card" style={{padding:'26px 18px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>Aucun evenement</div>
+      :<div style={{display:'flex',flexDirection:'column',gap:8}}>{selEvts.map(e=>(<div key={e.id} className="card" style={{padding:'13px 15px',display:'flex',alignItems:'center',gap:12}}>
+        <div style={{width:3,height:e.loc?50:38,borderRadius:2,background:e.col,flexShrink:0}}/>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:15,fontWeight:700,marginBottom:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{e.title}</div>
+          <div style={{fontSize:12,color:'var(--t3)'}}>{e.allDay?'Toute la journee':e.st+(e.et?' — '+e.et:'')}</div>
+          {e.loc&&<div style={{fontSize:11,color:'var(--t3)',display:'flex',alignItems:'center',gap:3,marginTop:2}}><Ico d={I.pin} size={10}/>{e.loc}</div>}
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:4}}>
+          <button onClick={()=>{setEditE(e);setModal(true);}} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.edit} size={15}/></button>
+          <button onClick={()=>delEvt(sel,e.id)} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.del} size={15}/></button>
+        </div>
+      </div>))}</div>}
+    </div>
+    {modal&&<EventModal init={editE} defDate={sel} onSave={saveEvt} onClose={()=>{setModal(false);setEditE(null);}}/>}
+  </div>);
 }
-
 function EventModal({init,defDate,onSave,onClose}){
   const [title,setTitle]=useState(init?.title||'');const [date,setDate]=useState(init?.date||defDate);const [st,setSt]=useState(init?.st||'09:00');const [et,setEt]=useState(init?.et||'10:00');const [col,setCol]=useState(init?.col||EVT_COLORS[0]);const [allD,setAllD]=useState(init?.allDay||false);const [loc,setLoc]=useState(init?.loc||'');const [notes,setNotes]=useState(init?.notes||'');const [url,setUrl]=useState(init?.url||'');const [alert,setAlert]=useState(init?.alert||'none');const [travel,setTravel]=useState(init?.travel||'none');const [repeat,setRepeat]=useState(init?.repeat||'none');
   const save=()=>{if(!title.trim())return;onSave({id:init?.id||Date.now(),title:title.trim(),date,st:allD?'':st,et:allD?'':et,col,allDay:allD,loc,notes,url,alert,travel,repeat});};
   const SF=({label,children})=><div style={{display:'flex',flexDirection:'column',gap:5}}><MiniLabel>{label}</MiniLabel>{children}</div>;
-  return(
-    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="sheet">
-        <div className="sheet-header"><div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><h2 style={{fontSize:19,fontWeight:800}}>{init?'Modifier':'Nouvel evenement'}</h2><XBtn onClick={onClose}/></div></div>
-        <div className="sheet-body"><div style={{display:'flex',flexDirection:'column',gap:12}}>
-          <input className="inp" placeholder="Titre" value={title} onChange={e=>setTitle(e.target.value)} autoFocus/>
-          <SF label="DATE"><input className="inp" type="date" value={date} onChange={e=>setDate(e.target.value)}/></SF>
-          <RowTog label="Toute la journee" val={allD} onChange={setAllD}/>
-          {!allD&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}><SF label="DEBUT"><input className="inp" type="time" value={st} onChange={e=>setSt(e.target.value)}/></SF><SF label="FIN"><input className="inp" type="time" value={et} onChange={e=>setEt(e.target.value)}/></SF></div>}
-          <SF label="COULEUR"><div style={{display:'flex',gap:10}}>{EVT_COLORS.map(c=><ColorSwatch key={c} c={c} sel={col===c} onClick={()=>setCol(c)}/>)}</div></SF>
-          <div className="divider"/>
-          <SF label="LIEU"><div style={{position:'relative'}}><input className="inp" placeholder="Adresse ou lieu" value={loc} onChange={e=>setLoc(e.target.value)} style={{paddingLeft:34}}/><div style={{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',color:'var(--t3)'}}><Ico d={I.pin} size={14}/></div></div></SF>
-          <SF label="URL"><div style={{position:'relative'}}><input className="inp" placeholder="https://..." value={url} onChange={e=>setUrl(e.target.value)} style={{paddingLeft:34}}/><div style={{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',color:'var(--t3)'}}><Ico d={I.link} size={14}/></div></div></SF>
-          <SF label="NOTES"><textarea className="inp" rows={3} placeholder="Ajouter des notes..." value={notes} onChange={e=>setNotes(e.target.value)}/></SF>
-          <div className="divider"/>
-          <SF label="ALERTE"><select className="inp" value={alert} onChange={e=>setAlert(e.target.value)}>{ALERTS.map(a=><option key={a.v} value={a.v}>{a.l}</option>)}</select></SF>
-          <SF label="TEMPS DE ROUTE"><select className="inp" value={travel} onChange={e=>setTravel(e.target.value)}>{TRAVEL.map(t=><option key={t.v} value={t.v}>{t.l}</option>)}</select></SF>
-          <SF label="REPETITION"><select className="inp" value={repeat} onChange={e=>setRepeat(e.target.value)}>{REPEAT.map(r=><option key={r.v} value={r.v}>{r.l}</option>)}</select></SF>
-          <button className="btn-acc" onClick={save} style={{marginTop:6}}>{init?'Enregistrer':'Creer'}</button>
-        </div></div>
-      </div>
-    </div>
-  );
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="sheet"><div className="sheet-header"><div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><h2 style={{fontSize:19,fontWeight:800}}>{init?'Modifier':'Nouvel evenement'}</h2><XBtn onClick={onClose}/></div></div>
+    <div className="sheet-body"><div style={{display:'flex',flexDirection:'column',gap:12}}>
+      <input className="inp" placeholder="Titre" value={title} onChange={e=>setTitle(e.target.value)} autoFocus/>
+      <SF label="DATE"><input className="inp" type="date" value={date} onChange={e=>setDate(e.target.value)}/></SF>
+      <RowTog label="Toute la journee" val={allD} onChange={setAllD}/>
+      {!allD&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}><SF label="DEBUT"><input className="inp" type="time" value={st} onChange={e=>setSt(e.target.value)}/></SF><SF label="FIN"><input className="inp" type="time" value={et} onChange={e=>setEt(e.target.value)}/></SF></div>}
+      <SF label="COULEUR"><div style={{display:'flex',gap:10}}>{EVT_COLORS.map(c=><ColorSwatch key={c} c={c} sel={col===c} onClick={()=>setCol(c)}/>)}</div></SF>
+      <div className="divider"/>
+      <SF label="LIEU"><div style={{position:'relative'}}><input className="inp" placeholder="Adresse ou lieu" value={loc} onChange={e=>setLoc(e.target.value)} style={{paddingLeft:34}}/><div style={{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',color:'var(--t3)'}}><Ico d={I.pin} size={14}/></div></div></SF>
+      <SF label="NOTES"><textarea className="inp" rows={3} placeholder="Notes..." value={notes} onChange={e=>setNotes(e.target.value)}/></SF>
+      <div className="divider"/>
+      <SF label="ALERTE"><select className="inp" value={alert} onChange={e=>setAlert(e.target.value)}>{ALERTS.map(a=><option key={a.v} value={a.v}>{a.l}</option>)}</select></SF>
+      <SF label="REPETITION"><select className="inp" value={repeat} onChange={e=>setRepeat(e.target.value)}>{REPEAT.map(r=><option key={r.v} value={r.v}>{r.l}</option>)}</select></SF>
+      <button className="btn-acc" onClick={save} style={{marginTop:6}}>{init?'Enregistrer':'Creer'}</button>
+    </div></div></div>
+  </div>);
 }
 
 /* ══════════════════════════════════════
-   CALCULATOR — Not Boring style
+   CALCULATOR CORE
 ══════════════════════════════════════ */
-function CalculatorModule(){
+function CalculatorCore(){
   const [expr,setExpr]=useState('');const [disp,setDisp]=useState('0');const [hist,setHist]=useState('');const [sci,setSci]=useState(false);const [deg,setDeg]=useState(true);const [mem,setMem]=useState(0);
   const calced=useRef(false);
   const D2R=Math.PI/180,R2D=180/Math.PI;
   const fact=n=>{n=Math.round(n);if(n<0||n>170)return NaN;let r=1;for(let i=2;i<=n;i++)r*=i;return r;};
-  const evalExpr=useCallback(e=>{
-    try{
-      let s=e.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/\^/g,'**').replace(/π/g,'('+Math.PI+')');
-      s=s.replace(/(?<![0-9.])e(?![0-9+\-*/(])/g,'('+Math.E+')');
-      s=s.replace(/(\d+(?:\.\d+)?)!/g,(_,n)=>String(fact(parseFloat(n))));
-      const d=deg;
-      s=s.replace(/sin\(/g,d?`(x=>Math.sin(x*${D2R}))(`:'Math.sin(').replace(/cos\(/g,d?`(x=>Math.cos(x*${D2R}))(`:'Math.cos(').replace(/tan\(/g,d?`(x=>Math.tan(x*${D2R}))(`:'Math.tan(').replace(/asin\(/g,d?`(x=>Math.asin(x)*${R2D})(`:'Math.asin(').replace(/acos\(/g,d?`(x=>Math.acos(x)*${R2D})(`:'Math.acos(').replace(/atan\(/g,d?`(x=>Math.atan(x)*${R2D})(`:'Math.atan(').replace(/ln\(/g,'Math.log(').replace(/log\(/g,'Math.log10(').replace(/√\(/g,'Math.sqrt(').replace(/∛\(/g,'Math.cbrt(').replace(/abs\(/g,'Math.abs(');
-      const r=Function('"use strict";return('+s+')')();
-      if(typeof r!=='number'||isNaN(r))return 'Erreur';
-      if(!isFinite(r))return r>0?'∞':'-∞';
-      const abs=Math.abs(r);
-      if(abs>=1e13||(abs<1e-9&&abs>0))return r.toExponential(4);
-      return String(parseFloat(r.toPrecision(12)));
-    }catch{return 'Erreur';}
-  },[deg]);
-
+  const evalExpr=useCallback(e=>{try{let s=e.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/\^/g,'**').replace(/π/g,'('+Math.PI+')');s=s.replace(/(?<![0-9.])e(?![0-9+\-*/(])/g,'('+Math.E+')');s=s.replace(/(\d+(?:\.\d+)?)!/g,(_,n)=>String(fact(parseFloat(n))));const d=deg;s=s.replace(/sin\(/g,d?`(x=>Math.sin(x*${D2R}))(`:'Math.sin(').replace(/cos\(/g,d?`(x=>Math.cos(x*${D2R}))(`:'Math.cos(').replace(/tan\(/g,d?`(x=>Math.tan(x*${D2R}))(`:'Math.tan(').replace(/asin\(/g,d?`(x=>Math.asin(x)*${R2D})(`:'Math.asin(').replace(/acos\(/g,d?`(x=>Math.acos(x)*${R2D})(`:'Math.acos(').replace(/atan\(/g,d?`(x=>Math.atan(x)*${R2D})(`:'Math.atan(').replace(/ln\(/g,'Math.log(').replace(/log\(/g,'Math.log10(').replace(/√\(/g,'Math.sqrt(').replace(/∛\(/g,'Math.cbrt(').replace(/abs\(/g,'Math.abs(');const r=Function('"use strict";return('+s+')')();if(typeof r!=='number'||isNaN(r))return'Erreur';if(!isFinite(r))return r>0?'∞':'-∞';const abs=Math.abs(r);if(abs>=1e13||(abs<1e-9&&abs>0))return r.toExponential(4);return String(parseFloat(r.toPrecision(12)));}catch{return'Erreur';}},[deg]);
   const append=s=>{if(calced.current){if(/^[0-9(πe]$/.test(s)||s.endsWith('(')){setExpr(s);setDisp(s);setHist('');calced.current=false;return;}setExpr(disp+s);setDisp(disp+s);setHist('');calced.current=false;return;}const ne=(expr==='0'||expr==='Erreur')&&/^[0-9]$/.test(s)?s:expr+s;setExpr(ne);setDisp(ne);};
   const equals=()=>{if(!expr||expr==='Erreur')return;const r=evalExpr(expr);setHist(expr+' =');setDisp(r);setExpr(r==='Erreur'?'':r);calced.current=true;};
   const clear=()=>{setExpr('');setDisp('0');setHist('');calced.current=false;};
@@ -870,59 +561,120 @@ function CalculatorModule(){
   const sign=()=>{const s=expr.startsWith('-')?expr.slice(1):'-'+expr;setExpr(s);setDisp(s);};
   const pct=()=>{const r=String(parseFloat(evalExpr(expr))/100);setExpr(r);setDisp(r);calced.current=true;};
   const applyFn=fn=>{const r=String(parseFloat(evalExpr(fn.replace('X',expr))));setExpr(r);setDisp(r);calced.current=true;};
-
-  const ds=disp.length>14?disp.slice(0,14)+'…':disp;
-  const dSize=ds.length>10?32:ds.length>7?40:54;
-  const isErr=disp==='Erreur';
-
+  const ds=disp.length>14?disp.slice(0,14)+'…':disp;const dSize=ds.length>10?32:ds.length>7?40:54;const isErr=disp==='Erreur';
   const STD=[[['AC','fn'],['±','fn'],['%','fn'],['÷','op']],[['7','num'],['8','num'],['9','num'],['×','op']],[['4','num'],['5','num'],['6','num'],['−','op']],[['1','num'],['2','num'],['3','num'],['+','op']],[['0','num'],['.',  'num'],['⌫','fn'],['=','eq']]];
   const SCI=[['sin(','cos(','tan(','π','e'],['asin(','acos(','atan(','ln(','log('],['√(','∛(','x²','xʸ','n!']];
-
   const doStd=l=>{if(l==='AC')clear();else if(l==='⌫')back();else if(l==='=')equals();else if(l==='±')sign();else if(l==='%')pct();else append(l==='÷'?'÷':l==='×'?'×':l==='−'?'−':l);};
   const doSci=l=>{if(l==='x²')applyFn('(X)*(X)');else if(l==='xʸ')append('^');else if(l==='n!')applyFn('(X)!');else append(l);};
-
-  return (
-    <div className="page" style={{padding:'16px 16px 0',display:'flex',flexDirection:'column'}}>
-      {/* Display */}
-      <div style={{padding:'10px 8px 18px',textAlign:'right',minHeight:100}}>
-        <div style={{fontSize:12,color:'var(--t3)',minHeight:18,marginBottom:6,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis',direction:'rtl',fontWeight:600}}>{hist||expr}</div>
-        <div style={{
-          fontFamily:"'Nunito', -apple-system, sans-serif",
-          fontWeight:900, lineHeight:1, overflow:'hidden', whiteSpace:'nowrap', direction:'rtl',
-          transition:'font-size .15s',
-          ...(isErr
-            ? {fontSize:32, color:'#ff453a'}
-            : {
-                fontSize:dSize,
-                background:'linear-gradient(135deg,var(--t1),var(--t2))',
-                WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-              }
-          )
-        }}>{ds}</div>
-      </div>
-
-      {/* Toggles */}
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-        <button onClick={()=>setSci(v=>!v)} style={{fontSize:11,fontWeight:800,padding:'5px 12px',borderRadius:8,letterSpacing:'.06em',background:sci?'rgba(var(--acc-rgb),.2)':'rgba(255,255,255,.08)',color:sci?'var(--acc)':'var(--t2)',border:'none',cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>SCI</button>
-        {sci&&<button onClick={()=>setDeg(v=>!v)} style={{fontSize:11,fontWeight:800,padding:'5px 12px',borderRadius:8,background:'rgba(255,255,255,.08)',color:'var(--t2)',border:'none',cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>{deg?'DEG':'RAD'}</button>}
-        <div style={{marginLeft:'auto',display:'flex',gap:5}}>
-          {[['M+',()=>setMem(parseFloat(evalExpr(expr))||0)],['MR',()=>{const s=String(mem);setExpr(s);setDisp(s);}],['MC',()=>setMem(0)]].map(([lb,fn])=>(
-            <button key={lb} onClick={fn} style={{fontSize:10,fontWeight:700,padding:'4px 8px',borderRadius:7,background:'rgba(255,255,255,.07)',color:'var(--t3)',border:'none',cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>{lb}</button>
-          ))}
-        </div>
-      </div>
-
-      {sci&&<div style={{display:'flex',flexDirection:'column',gap:5,marginBottom:8}}>{SCI.map((row,ri)=><div key={ri} style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:5}}>{row.map(l=><button key={l} className="cbtn sci" onClick={()=>doSci(l)}>{l}</button>)}</div>)}</div>}
-
-      <div style={{display:'flex',flexDirection:'column',gap:8}}>
-        {STD.map((row,ri)=>(
-          <div key={ri} style={{display:'grid',gridTemplateColumns:ri===4?'2fr 1fr 1fr 1fr':'1fr 1fr 1fr 1fr',gap:8}}>
-            {row.map(([l,t],ci)=><button key={ci} className={`cbtn ${t}`} style={ri===4&&ci===0?{justifyContent:'flex-start',paddingLeft:28}:{}} onClick={()=>doStd(l)}>{l}</button>)}
-          </div>
-        ))}
+  return(<div style={{padding:'16px 16px 0',display:'flex',flexDirection:'column'}}>
+    <div style={{padding:'10px 8px 18px',textAlign:'right',minHeight:100}}>
+      <div style={{fontSize:12,color:'var(--t3)',minHeight:18,marginBottom:6,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis',direction:'rtl',fontWeight:600}}>{hist||expr}</div>
+      <div style={{fontFamily:"'Nunito',-apple-system,sans-serif",fontWeight:900,lineHeight:1,overflow:'hidden',whiteSpace:'nowrap',direction:'rtl',transition:'font-size .15s',...(isErr?{fontSize:32,color:'#ff453a'}:{fontSize:dSize,background:'linear-gradient(135deg,var(--t1),var(--t2))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'})}}>{ds}</div>
+    </div>
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+      <button onClick={()=>setSci(v=>!v)} style={{fontSize:11,fontWeight:800,padding:'5px 12px',borderRadius:8,background:sci?'rgba(var(--acc-rgb),.2)':'rgba(255,255,255,.08)',color:sci?'var(--acc)':'var(--t2)',border:'none',cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>SCI</button>
+      {sci&&<button onClick={()=>setDeg(v=>!v)} style={{fontSize:11,fontWeight:800,padding:'5px 12px',borderRadius:8,background:'rgba(255,255,255,.08)',color:'var(--t2)',border:'none',cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>{deg?'DEG':'RAD'}</button>}
+      <div style={{marginLeft:'auto',display:'flex',gap:5}}>
+        {[['M+',()=>setMem(parseFloat(evalExpr(expr))||0)],['MR',()=>{const s=String(mem);setExpr(s);setDisp(s);}],['MC',()=>setMem(0)]].map(([lb,fn])=>(<button key={lb} onClick={fn} style={{fontSize:10,fontWeight:700,padding:'4px 8px',borderRadius:7,background:'rgba(255,255,255,.07)',color:'var(--t3)',border:'none',cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>{lb}</button>))}
       </div>
     </div>
-  );
+    {sci&&<div style={{display:'flex',flexDirection:'column',gap:5,marginBottom:8}}>{SCI.map((row,ri)=><div key={ri} style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:5}}>{row.map(l=><button key={l} className="cbtn sci" onClick={()=>doSci(l)}>{l}</button>)}</div>)}</div>}
+    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+      {STD.map((row,ri)=>(<div key={ri} style={{display:'grid',gridTemplateColumns:ri===4?'2fr 1fr 1fr 1fr':'1fr 1fr 1fr 1fr',gap:8}}>{row.map(([l,t],ci)=><button key={ci} className={`cbtn ${t}`} style={ri===4&&ci===0?{justifyContent:'flex-start',paddingLeft:28}:{}} onClick={()=>doStd(l)}>{l}</button>)}</div>))}
+    </div>
+  </div>);
+}
+
+/* ══════════════════════════════════════
+   CONVERTISSEUR
+══════════════════════════════════════ */
+const CONV_CATS=[
+  {id:'vitesse',    label:'Vitesse',     ids:['kmh','kts','mph','ms'],         labels:['km/h','kts','mph','m/s']},
+  {id:'longueur',   label:'Longueur',    ids:['km','nm','mi','m','ft'],        labels:['km','NM','mi','m','ft']},
+  {id:'altitude',   label:'Altitude',   ids:['ft','m','fl'],                  labels:['ft','m','FL']},
+  {id:'masse',      label:'Masse',       ids:['kg','lb','oz'],                 labels:['kg','lb','oz']},
+  {id:'temperature',label:'Temperature',ids:['c','f','k'],                    labels:['°C','°F','K']},
+  {id:'devises',    label:'Devises',     ids:['eur','usd','gbp','chf','jpy'], labels:['EUR','USD','GBP','CHF','JPY']},
+];
+const TO_BASE={
+  vitesse:   {kmh:v=>v/3.6,kts:v=>v*0.514444,mph:v=>v*0.44704,ms:v=>v},
+  longueur:  {km:v=>v*1000,nm:v=>v*1852,mi:v=>v*1609.344,m:v=>v,ft:v=>v*0.3048},
+  altitude:  {ft:v=>v,m:v=>v*3.28084,fl:v=>v*100},
+  masse:     {kg:v=>v,lb:v=>v*0.453592,oz:v=>v*0.0283495},
+  temperature:{c:v=>v,f:v=>(v-32)*5/9,k:v=>v-273.15},
+};
+const FROM_BASE={
+  vitesse:   {kmh:v=>v*3.6,kts:v=>v/0.514444,mph:v=>v/0.44704,ms:v=>v},
+  longueur:  {km:v=>v/1000,nm:v=>v/1852,mi:v=>v/1609.344,m:v=>v,ft:v=>v/0.3048},
+  altitude:  {ft:v=>v,m:v=>v/3.28084,fl:v=>v/100},
+  masse:     {kg:v=>v,lb:v=>v/0.453592,oz:v=>v/0.0283495},
+  temperature:{c:v=>v,f:v=>v*9/5+32,k:v=>v+273.15},
+};
+const fmtNum=v=>{if(v===null||isNaN(v))return'—';const a=Math.abs(v);if(a>=1e7||(a<0.0001&&a!==0))return v.toExponential(4);if(a>=1000)return parseFloat(v.toFixed(2)).toString();return parseFloat(v.toPrecision(6)).toString();};
+
+function ConvertisseurModule(){
+  const [cat,setCat]=useState('vitesse');
+  const [from,setFrom]=useState('kmh');const [to,setTo]=useState('kts');
+  const [val,setVal]=useState('');const [rates,setRates]=useState(null);
+  const cc=CONV_CATS.find(c=>c.id===cat);
+  const [rc1,rc2]=['#54a0ff','#2e86de'];
+
+  useEffect(()=>{if(cat!=='devises')return;const c=ls.get('ut6_forex',null);if(c&&Date.now()-c.ts<3600000){setRates(c.rates);}else{window.fetch('https://open.er-api.com/v6/latest/EUR').then(r=>r.json()).then(d=>{setRates(d.rates);ls.set('ut6_forex',{rates:d.rates,ts:Date.now()});}).catch(()=>{});};},[cat]);
+
+  const changeCat=id=>{const c=CONV_CATS.find(x=>x.id===id);setCat(id);setFrom(c.ids[0]);setTo(c.ids[1]);setVal('');};
+  const swap=()=>{setFrom(to);setTo(from);setVal('');};
+
+  const numVal=parseFloat(val);
+  let result=null;
+  if(!isNaN(numVal)&&val!==''){
+    if(cat==='devises'&&rates){const fr=from==='eur'?1:rates[from.toUpperCase()];const tr=to==='eur'?1:rates[to.toUpperCase()];if(fr&&tr)result=(numVal/fr)*tr;}
+    else if(cat!=='devises'){try{const base=TO_BASE[cat][from](numVal);result=FROM_BASE[cat][to](base);}catch{}}
+  }
+
+  return(<div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
+    <div style={{display:'flex',gap:8,overflowX:'auto',padding:'14px 18px 0',scrollbarWidth:'none',flexShrink:0}}>
+      {CONV_CATS.map(c=><button key={c.id} onClick={()=>changeCat(c.id)} style={{flexShrink:0,padding:'7px 14px',borderRadius:12,border:'none',fontFamily:"'Nunito',sans-serif",fontWeight:800,fontSize:12,cursor:'pointer',whiteSpace:'nowrap',background:cat===c.id?`rgba(${hex2rgb(rc1)},.2)`:'rgba(255,255,255,.07)',color:cat===c.id?rc1:'var(--t3)',outline:cat===c.id?`1.5px solid rgba(${hex2rgb(rc1)},.35)`:'none'}}>{c.label}</button>)}
+    </div>
+    <div className="conv-scroll" style={{padding:'16px 18px 0'}}>
+      <div style={{...tint(rc1,rc2),padding:'20px',marginBottom:14}}>
+        <div className="wlbl">Valeur</div>
+        <input type="number" inputMode="decimal" value={val} onChange={e=>setVal(e.target.value)} placeholder="0" style={{background:'none',border:'none',outline:'none',fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:52,color:'var(--t1)',width:'100%',lineHeight:1,marginBottom:16}}/>
+        <div className="wlbl">De</div>
+        <select value={from} onChange={e=>{setFrom(e.target.value);setVal('');}} className="inp" style={{marginBottom:12,fontWeight:800}}>
+          {cc.ids.map((id,i)=><option key={id} value={id}>{cc.labels[i]}</option>)}
+        </select>
+        <div style={{display:'flex',justifyContent:'center',marginBottom:12}}>
+          <button onClick={swap} style={{width:42,height:42,borderRadius:21,background:`rgba(${hex2rgb(rc1)},.2)`,border:`1.5px solid rgba(${hex2rgb(rc1)},.35)`,color:rc1,cursor:'pointer',fontSize:20,display:'flex',alignItems:'center',justifyContent:'center'}}>⇅</button>
+        </div>
+        <div className="wlbl">Vers</div>
+        <select value={to} onChange={e=>{setTo(e.target.value);setVal('');}} className="inp" style={{fontWeight:800}}>
+          {cc.ids.map((id,i)=><option key={id} value={id}>{cc.labels[i]}</option>)}
+        </select>
+      </div>
+      <div style={{...tint(rc1,rc2),padding:'20px',marginBottom:24}}>
+        <div className="wlbl">Resultat</div>
+        <div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:4}}>
+          <span style={gT(rc1,rc2,52)}>{fmtNum(result)}</span>
+          {result!==null&&<span style={{fontSize:18,fontWeight:800,color:'var(--t2)'}}>{cc.labels[cc.ids.indexOf(to)]}</span>}
+        </div>
+        {cat==='devises'&&!rates&&<div style={{fontSize:11,color:'var(--t3)',marginTop:4,fontWeight:600}}>Chargement des taux...</div>}
+      </div>
+    </div>
+  </div>);
+}
+
+/* ══ CALCULATOR SCREEN (sub-tabs) ══ */
+function CalculatorScreen(){
+  const [sub,setSub]=useState('calc');
+  const [rc1]=['#54a0ff'];
+  return(<div style={{display:'flex',flexDirection:'column',height:'100%'}}>
+    <div className="subtabs">
+      {[{id:'calc',label:'Calculatrice'},{id:'conv',label:'Convertisseur'}].map(s=>(
+        <button key={s.id} onClick={()=>setSub(s.id)} className="subtab" style={{background:sub===s.id?`rgba(${hex2rgb(sub==='calc'?'#7c5cfc':'#54a0ff')},.2)`:'rgba(255,255,255,.07)',color:sub===s.id?'var(--acc)':'var(--t3)',outline:sub===s.id?'1.5px solid rgba(var(--acc-rgb),.35)':'none'}}>{s.label}</button>
+      ))}
+    </div>
+    {sub==='calc'?<CalculatorCore/>:<ConvertisseurModule/>}
+  </div>);
 }
 
 /* ══════════════════════════════════════
@@ -935,48 +687,40 @@ function NotesModule(){
   const save=()=>{const t=title.trim()||'Sans titre',now=new Date().toISOString();if(selId)setNotes(p=>p.map(n=>n.id===selId?{...n,title:t,body,upd:now}:n));else setNotes(p=>[{id:Date.now(),title:t,body,cre:now,upd:now},...p]);setView('list');};
   const del=id=>{setNotes(p=>p.filter(n=>n.id!==id));setView('list');};
   const filtered=notes.filter(n=>!q||n.title.toLowerCase().includes(q.toLowerCase())||n.body.toLowerCase().includes(q.toLowerCase()));
-  if(view==='edit')return(
-    <div className="page" style={{display:'flex',flexDirection:'column',height:'100%'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'22px 18px 14px',borderBottom:'1px solid var(--bdr)'}}>
-        <button onClick={()=>setView('list')} style={{background:'none',border:'none',color:'var(--acc)',cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontSize:15,fontWeight:700,fontFamily:'inherit'}}><Ico d={I.back} size={16}/> Notes</button>
-        <div style={{display:'flex',gap:12,alignItems:'center'}}>
-          {selId&&<button onClick={()=>del(selId)} style={{background:'none',border:'none',color:'#ff453a',cursor:'pointer'}}><Ico d={I.del} size={18}/></button>}
-          <button onClick={save} className="btn-acc" style={{padding:'7px 18px',fontSize:14,borderRadius:12,width:'auto'}}>Sauver</button>
+  if(view==='edit')return(<div className="page" style={{display:'flex',flexDirection:'column',height:'100%'}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'22px 18px 14px',borderBottom:'1px solid var(--bdr)'}}>
+      <button onClick={()=>setView('list')} style={{background:'none',border:'none',color:'var(--acc)',cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontSize:15,fontWeight:700,fontFamily:'inherit'}}><Ico d={I.back} size={16}/> Notes</button>
+      <div style={{display:'flex',gap:12,alignItems:'center'}}>
+        {selId&&<button onClick={()=>del(selId)} style={{background:'none',border:'none',color:'#ff453a',cursor:'pointer'}}><Ico d={I.del} size={18}/></button>}
+        <button onClick={save} className="btn-acc" style={{padding:'7px 18px',fontSize:14,borderRadius:12,width:'auto'}}>Sauver</button>
+      </div>
+    </div>
+    <div style={{flex:1,overflow:'auto',padding:'18px'}}>
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Titre" style={{background:'none',border:'none',outline:'none',fontSize:26,fontWeight:800,color:'var(--t1)',width:'100%',marginBottom:14,fontFamily:"'Nunito',sans-serif"}}/>
+      <textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="Commence a ecrire..." style={{background:'none',border:'none',outline:'none',fontSize:15,color:'var(--t2)',width:'100%',minHeight:320,resize:'none',lineHeight:1.75,fontFamily:'inherit'}}/>
+    </div>
+  </div>);
+  return(<div className="page" style={{padding:'22px 18px 0'}}>
+    <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:18}}>
+      <h1 style={{fontSize:34,fontWeight:900,fontFamily:"'Nunito',sans-serif"}}>Notes</h1>
+      <IcoBtn acc onClick={()=>open(null)}><Ico d={I.plus} size={15} sw={2.5}/></IcoBtn>
+    </div>
+    <div style={{position:'relative',marginBottom:18}}>
+      <input className="inp" placeholder="Rechercher..." value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:36}}/>
+      <div style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--t3)'}}><Ico d={I.srch} size={15}/></div>
+    </div>
+    {filtered.length===0?<div className="card" style={{padding:'36px 18px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>{q?'Aucun resultat':'Aucune note'}</div>
+    :<div className="list-wrap">{filtered.map(n=>(<div key={n.id} className="list-row list-row-btn" onClick={()=>open(n)}>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:3}}>
+          <div style={{fontSize:15,fontWeight:700,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis',flex:1,marginRight:8}}>{n.title}</div>
+          <div style={{fontSize:11,color:'var(--t3)',flexShrink:0}}>{fmtTime(n.upd)}</div>
         </div>
+        <div style={{fontSize:13,color:'var(--t3)',overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{n.body||'Aucun texte'}</div>
       </div>
-      <div style={{flex:1,overflow:'auto',padding:'18px'}}>
-        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Titre" style={{background:'none',border:'none',outline:'none',fontSize:26,fontWeight:800,color:'var(--t1)',width:'100%',marginBottom:14,fontFamily:"'Nunito',sans-serif"}}/>
-        <textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="Commence a ecrire..." style={{background:'none',border:'none',outline:'none',fontSize:15,color:'var(--t2)',width:'100%',minHeight:320,resize:'none',lineHeight:1.75,fontFamily:'inherit'}}/>
-      </div>
-    </div>
-  );
-  return(
-    <div className="page" style={{padding:'22px 18px 0'}}>
-      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:18}}>
-        <h1 style={{fontSize:34,fontWeight:900,fontFamily:"'Nunito',sans-serif"}}>Notes</h1>
-        <IcoBtn acc onClick={()=>open(null)}><Ico d={I.plus} size={15} sw={2.5}/></IcoBtn>
-      </div>
-      <div style={{position:'relative',marginBottom:18}}>
-        <input className="inp" placeholder="Rechercher..." value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:36}}/>
-        <div style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--t3)'}}><Ico d={I.srch} size={15}/></div>
-      </div>
-      {filtered.length===0
-        ?<div className="card" style={{padding:'36px 18px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>{q?'Aucun resultat':'Aucune note'}</div>
-        :<div className="list-wrap">{filtered.map(n=>(
-            <div key={n.id} className="list-row list-row-btn" onClick={()=>open(n)}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:3}}>
-                  <div style={{fontSize:15,fontWeight:700,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis',flex:1,marginRight:8}}>{n.title}</div>
-                  <div style={{fontSize:11,color:'var(--t3)',flexShrink:0}}>{fmtTime(n.upd)}</div>
-                </div>
-                <div style={{fontSize:13,color:'var(--t3)',overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{n.body||'Aucun texte'}</div>
-              </div>
-              <Ico d={I.cr} size={14} sw={1.5} col="var(--t3)"/>
-            </div>
-          ))}</div>
-      }
-    </div>
-  );
+      <Ico d={I.cr} size={14} sw={1.5} col="var(--t3)"/>
+    </div>))}</div>}
+  </div>);
 }
 
 /* ══════════════════════════════════════
@@ -984,7 +728,6 @@ function NotesModule(){
 ══════════════════════════════════════ */
 const RL_COLS=['#7c5cfc','#0a84ff','#30d158','#ff9f0a','#ff375f','#64d2ff','#ac8e68','#ff6961'];
 const PRI_L=['Aucune','Basse','Moyenne','Haute'];
-
 function RemindersModule(){
   const [lists,setLists]=useState(()=>ls.get('ut3_rlists',[{id:1,name:'Personnel',col:'#7c5cfc'},{id:2,name:'Travail',col:'#0a84ff'}]));
   const [items,setItems]=useState(()=>ls.get('ut3_ritems',[]));
@@ -996,220 +739,311 @@ function RemindersModule(){
   const saveL=(name,col)=>{setLists(p=>[...p,{id:Date.now(),name,col}]);setAddL(false);};
   const delL=id=>{setLists(p=>p.filter(l=>l.id!==id));setItems(p=>p.filter(r=>r.lid!==id));setView('lists');};
   const fmtDue=(dd,dt)=>{if(!dd)return null;const tdStr=todayISO(),tom=dateISO(new Date(Date.now()+86400000)),ov=dd<tdStr;const lbl=dd===tdStr?"Aujourd'hui":dd===tom?'Demain':parseISO(dd).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});return{lbl:dt?`${lbl} ${dt}`:lbl,ov};};
-
   if(view==='detail'&&curL){
     const all=lItems(curL.id),pend=all.filter(r=>!r.done),done=all.filter(r=>r.done);
-    return(
-      <div className="page">
-        <div style={{display:'flex',alignItems:'center',gap:12,padding:'22px 18px 16px',borderBottom:'1px solid var(--bdr)'}}>
-          <button onClick={()=>setView('lists')} style={{background:'none',border:'none',color:'var(--acc)',cursor:'pointer'}}><Ico d={I.back} size={20}/></button>
-          <div style={{flex:1}}><h1 style={{fontSize:26,fontWeight:900,color:curL.col,fontFamily:"'Nunito',sans-serif"}}>{curL.name}</h1><div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{pend.length} en attente</div></div>
-          <IcoBtn acc onClick={()=>{setEditR(null);setAddR(true);}}><Ico d={I.plus} size={14} sw={2.5}/></IcoBtn>
-        </div>
-        <div style={{padding:'14px 18px'}}>
-          {all.length===0&&<div className="card" style={{padding:'30px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>Aucun rappel</div>}
-          {pend.length>0&&<div className="list-wrap" style={{marginBottom:16}}>{pend.map(r=>{const due=fmtDue(r.dd,r.dt);return(
-            <div key={r.id} className="list-row">
-              <div className="chk" onClick={()=>togR(r.id)} style={{borderColor:r.pri>0?PRI_C[r.pri]:'rgba(255,255,255,.2)'}}/>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:15,fontWeight:600,color:'var(--t1)',marginBottom:due?2:0,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.title}</div>
-                {due&&<div style={{fontSize:11,color:due.ov?'#ff453a':'var(--t3)',display:'flex',alignItems:'center',gap:3,fontWeight:600}}><Ico d={I.clk} size={11}/>{due.lbl}</div>}
-                {r.note&&<div style={{fontSize:12,color:'var(--t3)',marginTop:1,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.note}</div>}
-              </div>
-              {r.pri>0&&<div className="pdot" style={{background:PRI_C[r.pri]}}/>}
-              <button onClick={()=>{setEditR(r);setAddR(true);}} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.edit} size={14}/></button>
-            </div>
-          );})}</div>}
-          {done.length>0&&<><div className="slbl" style={{marginTop:8}}>Completes ({done.length})</div><div className="list-wrap">{done.map(r=><div key={r.id} className="list-row" style={{opacity:.45}}><div className="chk done" onClick={()=>togR(r.id)}><Ico d={I.chk} size={10} sw={2.5}/></div><div style={{flex:1,fontSize:14,color:'var(--t2)',textDecoration:'line-through',overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.title}</div><button onClick={()=>delR(r.id)} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.x} size={13}/></button></div>)}</div></>}
-          <button onClick={()=>delL(curL.id)} style={{marginTop:22,width:'100%',padding:'12px',background:'rgba(255,67,58,.1)',border:'none',borderRadius:12,color:'#ff453a',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Supprimer la liste</button>
-        </div>
-        {addR&&<RemModal init={editR} lid={curL.id} onSave={saveR} onClose={()=>{setAddR(false);setEditR(null);}}/>}
+    return(<div className="page">
+      <div style={{display:'flex',alignItems:'center',gap:12,padding:'22px 18px 16px',borderBottom:'1px solid var(--bdr)'}}>
+        <button onClick={()=>setView('lists')} style={{background:'none',border:'none',color:'var(--acc)',cursor:'pointer'}}><Ico d={I.back} size={20}/></button>
+        <div style={{flex:1}}><h1 style={{fontSize:26,fontWeight:900,color:curL.col,fontFamily:"'Nunito',sans-serif"}}>{curL.name}</h1><div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{pend.length} en attente</div></div>
+        <IcoBtn acc onClick={()=>{setEditR(null);setAddR(true);}}><Ico d={I.plus} size={14} sw={2.5}/></IcoBtn>
       </div>
-    );
+      <div style={{padding:'14px 18px'}}>
+        {all.length===0&&<div className="card" style={{padding:'30px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>Aucun rappel</div>}
+        {pend.length>0&&<div className="list-wrap" style={{marginBottom:16}}>{pend.map(r=>{const due=fmtDue(r.dd,r.dt);return(<div key={r.id} className="list-row">
+          <div className="chk" onClick={()=>togR(r.id)} style={{borderColor:r.pri>0?PRI_C[r.pri]:'rgba(255,255,255,.2)'}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:due?2:0,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.title}</div>
+            {due&&<div style={{fontSize:11,color:due.ov?'#ff453a':'var(--t3)',fontWeight:600}}>{due.lbl}</div>}
+            {r.note&&<div style={{fontSize:12,color:'var(--t3)',marginTop:1,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.note}</div>}
+          </div>
+          {r.pri>0&&<div className="pdot" style={{background:PRI_C[r.pri]}}/>}
+          <button onClick={()=>{setEditR(r);setAddR(true);}} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.edit} size={14}/></button>
+        </div>);})}</div>}
+        {done.length>0&&<><div className="slbl" style={{marginTop:8}}>Completes ({done.length})</div><div className="list-wrap">{done.map(r=><div key={r.id} className="list-row" style={{opacity:.45}}><div className="chk done" onClick={()=>togR(r.id)}><Ico d={I.chk} size={10} sw={2.5}/></div><div style={{flex:1,fontSize:14,textDecoration:'line-through',overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.title}</div><button onClick={()=>delR(r.id)} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:4}}><Ico d={I.x} size={13}/></button></div>)}</div></>}
+        <button onClick={()=>delL(curL.id)} style={{marginTop:22,width:'100%',padding:'12px',background:'rgba(255,67,58,.1)',border:'none',borderRadius:12,color:'#ff453a',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Supprimer la liste</button>
+      </div>
+      {addR&&<RemModal init={editR} lid={curL.id} onSave={saveR} onClose={()=>{setAddR(false);setEditR(null);}}/>}
+    </div>);
   }
   const tdRems=items.filter(r=>r.dd===todayISO()&&!r.done);
-  return(
-    <div className="page" style={{padding:'22px 18px 0'}}>
-      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:20}}>
-        <h1 style={{fontSize:34,fontWeight:900,fontFamily:"'Nunito',sans-serif"}}>Rappels</h1>
-        <IcoBtn acc onClick={()=>setAddL(true)}><Ico d={I.plus} size={15} sw={2.5}/></IcoBtn>
-      </div>
-      {tdRems.length>0&&<div className="card" style={{padding:'14px 16px',marginBottom:18,display:'flex',alignItems:'center',gap:12}}>
-        <div style={{width:36,height:36,borderRadius:12,background:'rgba(255,159,10,.18)',display:'flex',alignItems:'center',justifyContent:'center',color:'#ff9f0a'}}><Ico d={I.clk} size={17}/></div>
-        <div><div style={{fontSize:15,fontWeight:700}}>Aujourd'hui</div><div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{tdRems.length} rappel{tdRems.length>1?'s':''} en attente</div></div>
-      </div>}
-      {lists.length===0
-        ?<div className="card" style={{padding:'36px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>Aucune liste</div>
-        :<div className="list-wrap">{lists.map(l=>{const cnt=lCount(l.id);return(
-            <div key={l.id} className="list-row list-row-btn" onClick={()=>{setCurL(l);setView('detail');}}>
-              <div style={{width:36,height:36,borderRadius:12,background:`rgba(${hex2rgb(l.col)},.18)`,display:'flex',alignItems:'center',justifyContent:'center',color:l.col,flexShrink:0}}><Ico d={I.list} size={15}/></div>
-              <div style={{flex:1}}><div style={{fontSize:15,fontWeight:700}}>{l.name}</div><div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{cnt} rappel{cnt!==1?'s':''}</div></div>
-              {cnt>0&&<div style={{fontSize:15,fontWeight:800,color:'var(--t3)'}}>{cnt}</div>}
-              <Ico d={I.cr} size={14} sw={1.5} col="var(--t3)"/>
-            </div>
-          );})}</div>
-      }
-      {addL&&<AddListModal onSave={saveL} onClose={()=>setAddL(false)}/>}
+  return(<div className="page" style={{padding:'22px 18px 0'}}>
+    <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:20}}>
+      <h1 style={{fontSize:34,fontWeight:900,fontFamily:"'Nunito',sans-serif"}}>Rappels</h1>
+      <IcoBtn acc onClick={()=>setAddL(true)}><Ico d={I.plus} size={15} sw={2.5}/></IcoBtn>
     </div>
-  );
+    {tdRems.length>0&&<div className="card" style={{padding:'14px 16px',marginBottom:18,display:'flex',alignItems:'center',gap:12}}>
+      <div style={{width:36,height:36,borderRadius:12,background:'rgba(255,159,10,.18)',display:'flex',alignItems:'center',justifyContent:'center',color:'#ff9f0a'}}><Ico d={I.clk} size={17}/></div>
+      <div><div style={{fontSize:15,fontWeight:700}}>Aujourd'hui</div><div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{tdRems.length} rappel{tdRems.length>1?'s':''} en attente</div></div>
+    </div>}
+    {lists.length===0?<div className="card" style={{padding:'36px',textAlign:'center',fontSize:13,color:'var(--t3)'}}>Aucune liste</div>
+    :<div className="list-wrap">{lists.map(l=>{const cnt=lCount(l.id);return(<div key={l.id} className="list-row list-row-btn" onClick={()=>{setCurL(l);setView('detail');}}>
+      <div style={{width:36,height:36,borderRadius:12,background:`rgba(${hex2rgb(l.col)},.18)`,display:'flex',alignItems:'center',justifyContent:'center',color:l.col,flexShrink:0}}><Ico d={I.list} size={15}/></div>
+      <div style={{flex:1}}><div style={{fontSize:15,fontWeight:700}}>{l.name}</div><div style={{fontSize:12,color:'var(--t3)',fontWeight:600}}>{cnt} rappel{cnt!==1?'s':''}</div></div>
+      {cnt>0&&<div style={{fontSize:15,fontWeight:800,color:'var(--t3)'}}>{cnt}</div>}
+      <Ico d={I.cr} size={14} sw={1.5} col="var(--t3)"/>
+    </div>);})}</div>}
+    {addL&&<AddListModal onSave={saveL} onClose={()=>setAddL(false)}/>}
+  </div>);
 }
-
-function AddListModal({onSave,onClose}){const [name,setName]=useState('');const [col,setCol]=useState(RL_COLS[0]);return <SheetModal title="Nouvelle liste" onClose={onClose}><div style={{display:'flex',flexDirection:'column',gap:12}}><input className="inp" placeholder="Nom de la liste" value={name} onChange={e=>setName(e.target.value)} autoFocus/><div style={{display:'flex',gap:10,flexWrap:'wrap'}}>{RL_COLS.map(c=><ColorSwatch key={c} c={c} sel={col===c} onClick={()=>setCol(c)}/>)}</div><button className="btn-acc" onClick={()=>name.trim()&&onSave(name.trim(),col)}>Creer</button></div></SheetModal>;}
+function AddListModal({onSave,onClose}){const [name,setName]=useState('');const [col,setCol]=useState(RL_COLS[0]);return<SheetModal title="Nouvelle liste" onClose={onClose}><div style={{display:'flex',flexDirection:'column',gap:12}}><input className="inp" placeholder="Nom de la liste" value={name} onChange={e=>setName(e.target.value)} autoFocus/><div style={{display:'flex',gap:10,flexWrap:'wrap'}}>{RL_COLS.map(c=><ColorSwatch key={c} c={c} sel={col===c} onClick={()=>setCol(c)}/>)}</div><button className="btn-acc" onClick={()=>name.trim()&&onSave(name.trim(),col)}>Creer</button></div></SheetModal>;}
 function RemModal({init,lid,onSave,onClose}){const [title,setTitle]=useState(init?.title||'');const [dd,setDd]=useState(init?.dd||'');const [dt,setDt]=useState(init?.dt||'');const [pri,setPri]=useState(init?.pri||0);const [note,setNote]=useState(init?.note||'');const save=()=>{if(!title.trim())return;onSave({id:init?.id,lid,title:title.trim(),dd,dt,pri,note});};return(<SheetModal title={init?'Modifier':'Nouveau rappel'} onClose={onClose}><div style={{display:'flex',flexDirection:'column',gap:11}}><input className="inp" placeholder="Titre" value={title} onChange={e=>setTitle(e.target.value)} autoFocus/><input className="inp" placeholder="Note (optionnel)" value={note} onChange={e=>setNote(e.target.value)}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}><div><MiniLabel>DATE</MiniLabel><input className="inp" type="date" value={dd} onChange={e=>setDd(e.target.value)}/></div><div><MiniLabel>HEURE</MiniLabel><input className="inp" type="time" value={dt} onChange={e=>setDt(e.target.value)}/></div></div><div><MiniLabel>PRIORITE</MiniLabel><div style={{display:'flex',gap:7,marginTop:6}}>{PRI_L.map((l,i)=>{const a=pri===i,bc=PRI_C[i];return<button key={i} onClick={()=>setPri(i)} style={{flex:1,padding:'7px 2px',borderRadius:10,border:`1px solid ${a?bc||'var(--acc)':'var(--bdr)'}`,background:a?`rgba(${hex2rgb(bc||'#7c5cfc')},.15)`:'var(--card)',color:a?bc||'var(--acc)':'var(--t3)',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>{l}</button>;})}</div></div><button className="btn-acc" onClick={save} style={{marginTop:4}}>{init?'Enregistrer':'Creer'}</button></div></SheetModal>);}
 
 /* ══════════════════════════════════════
-   SETTINGS SHEET
+   MINUTEUR MODULE
+══════════════════════════════════════ */
+function ChronoSub(){
+  const [running,setRunning]=useState(()=>{const l=window.__utLive;return l?.type==='chrono'?l.running:false;});
+  const [elapsed,setElapsed]=useState(()=>{const l=window.__utLive;return l?.type==='chrono'?l.saved:0;});
+  const [laps,setLaps]=useState([]);
+  const startRef=useRef(null);const savedRef=useRef(0);const lastLapRef=useRef(0);
+  const [c1,c2]=WC.chrono;
+
+  useEffect(()=>{
+    const l=window.__utLive;
+    if(l?.type==='chrono'){savedRef.current=l.saved;if(l.running){startRef.current=l.startTime;}}
+  },[]);
+
+  useEffect(()=>{
+    if(!running)return;
+    const t=setInterval(()=>setElapsed(savedRef.current+Date.now()-startRef.current),50);
+    return()=>clearInterval(t);
+  },[running]);
+
+  useEffect(()=>{
+    const live=running?{type:'chrono',running:true,startTime:startRef.current,saved:savedRef.current}
+      :elapsed>0?{type:'chrono',running:false,saved:elapsed}:null;
+    window.__utLive=live;ls.set('ut6_live',live);
+  },[running,elapsed]);
+
+  const toggle=()=>{if(running){savedRef.current=elapsed;}else{startRef.current=Date.now();}setRunning(v=>!v);};
+  const reset=()=>{setRunning(false);setElapsed(0);setLaps([]);savedRef.current=0;lastLapRef.current=0;window.__utLive=null;ls.set('ut6_live',null);};
+  const lap=()=>{const split=elapsed-lastLapRef.current;lastLapRef.current=elapsed;setLaps(p=>[...p,{total:elapsed,split}]);};
+
+  const cs=Math.floor((elapsed%1000)/10),ss=Math.floor(elapsed/1000)%60,mm=Math.floor(elapsed/60000)%60,hh=Math.floor(elapsed/3600000);
+  const btnStyle=(col,active)=>({flex:1,padding:'14px',borderRadius:16,border:'none',background:active?`rgba(${hex2rgb(col)},.2)`:'rgba(255,255,255,.09)',color:active?col:'var(--t2)',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",boxShadow:active?`0 4px 20px rgba(${hex2rgb(col)},.2)`:undefined});
+
+  return(<div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'20px 20px 0'}}>
+    <div style={{lineHeight:1,marginBottom:32,textAlign:'center'}}>
+      {hh>0&&<span style={gT(c1,c2,56)}>{pad2(hh)}:</span>}
+      <span style={gT(c1,c2,72)}>{pad2(mm)}:{pad2(ss)}</span>
+      <span style={{...gT(c1,c2,28),opacity:.5}}>:{pad2(cs)}</span>
+    </div>
+    <div style={{display:'flex',gap:10,width:'100%',marginBottom:24}}>
+      {elapsed>0&&<button onClick={reset} style={btnStyle('var(--t2)',false)}>Reset</button>}
+      {running&&<button onClick={lap} style={btnStyle(c1,true)}>Tour</button>}
+      <button onClick={toggle} style={btnStyle(running?'#ff453a':c1,true)}>{running?'Pause':elapsed>0?'Reprendre':'Start'}</button>
+    </div>
+    {laps.length>0&&<div style={{width:'100%'}}>
+      <div className="slbl" style={{marginBottom:8}}>Tours</div>
+      <div className="list-wrap">
+        {[...laps].reverse().map((l,ri)=>{const idx=laps.length-ri;return(<div key={idx} className="list-row" style={{borderBottom:ri<laps.length-1?'1px solid var(--bdr)':'none'}}>
+          <span style={{fontSize:13,fontWeight:700,color:'var(--t3)',minWidth:56}}>Tour {idx}</span>
+          <div style={{flex:1}}/>
+          <span style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginRight:12}}>{(() =>{const ms=l.split;const p=n=>String(n).padStart(2,'0');return`${p(Math.floor(ms/60000)%60)}:${p(Math.floor(ms/1000)%60)}.${p(Math.floor((ms%1000)/10))}`;})()}</span>
+          <span style={{fontSize:14,fontWeight:800}}>{(()=>{const ms=l.total;const p=n=>String(n).padStart(2,'0');return`${p(Math.floor(ms/60000)%60)}:${p(Math.floor(ms/1000)%60)}.${p(Math.floor((ms%1000)/10))}`;})()}</span>
+        </div>);})}
+      </div>
+    </div>}
+  </div>);
+}
+
+function TimerSub(){
+  const PRESETS=[{label:'5 min',ms:5*60000},{label:'10 min',ms:10*60000},{label:'25 min',ms:25*60000,sub:'Pomodoro'},{label:'60 min',ms:60*60000}];
+  const initLive=window.__utLive;
+  const [duration,setDuration]=useState(initLive?.type==='timer'?initLive.total:25*60000);
+  const [remaining,setRemaining]=useState(()=>{const l=window.__utLive;if(l?.type==='timer'){return l.running?Math.max(0,l.endTime-Date.now()):l.savedRemaining;}return 25*60000;});
+  const [running,setRunning]=useState(initLive?.type==='timer'?initLive.running:false);
+  const [done,setDone]=useState(false);
+  const endRef=useRef(initLive?.type==='timer'&&initLive.running?initLive.endTime:null);
+  const durRef=useRef(initLive?.type==='timer'?initLive.total:25*60000);
+  const [tc1,tc2]=['#fd79a8','#e84393'];
+  const CIRC=2*Math.PI*80;
+
+  useEffect(()=>{
+    if(!running)return;
+    const t=setInterval(()=>{
+      const rem=Math.max(0,endRef.current-Date.now());
+      setRemaining(rem);
+      if(rem<=0){
+        setRunning(false);setDone(true);
+        window.__utLive=null;ls.set('ut6_live',null);
+        if('Notification'in window&&Notification.permission==='granted')new Notification('Minuteur termine !',{body:'Votre minuteur est arrive a zero.'});
+        if('vibrate'in navigator)navigator.vibrate([300,100,300,100,300]);
+      }
+    },100);
+    return()=>clearInterval(t);
+  },[running]);
+
+  useEffect(()=>{
+    const live=running?{type:'timer',running:true,endTime:endRef.current,total:durRef.current}
+      :remaining>0&&remaining<durRef.current?{type:'timer',running:false,savedRemaining:remaining,total:durRef.current}:null;
+    window.__utLive=live;ls.set('ut6_live',live);
+  },[running,remaining]);
+
+  const selectPreset=ms=>{setRunning(false);setDone(false);setDuration(ms);setRemaining(ms);durRef.current=ms;window.__utLive=null;ls.set('ut6_live',null);};
+  const toggle=()=>{if(running){setRunning(false);}else{endRef.current=Date.now()+remaining;setRunning(true);setDone(false);}};
+  const reset=()=>{setRunning(false);setDone(false);setRemaining(duration);window.__utLive=null;ls.set('ut6_live',null);};
+
+  const progress=Math.max(0,remaining/duration);
+  const mm=Math.floor(remaining/60000),ss=Math.floor((remaining%60000)/1000);
+
+  return(<div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'16px 20px 0'}}>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8,width:'100%',marginBottom:28}}>
+      {PRESETS.map(p=>(<button key={p.ms} onClick={()=>selectPreset(p.ms)} style={{padding:'8px 4px',borderRadius:14,border:'none',fontFamily:"'Nunito',sans-serif",fontWeight:800,fontSize:11,cursor:'pointer',lineHeight:1.3,background:duration===p.ms?`rgba(${hex2rgb(tc1)},.2)`:'rgba(255,255,255,.07)',color:duration===p.ms?tc1:'var(--t3)',outline:duration===p.ms?`1.5px solid rgba(${hex2rgb(tc1)},.4)`:'none'}}>
+        {p.sub&&<div style={{fontSize:9,opacity:.7,marginBottom:2}}>{p.sub}</div>}{p.label}
+      </button>))}
+    </div>
+    <div style={{position:'relative',width:200,height:200,marginBottom:28}}>
+      <svg width={200} height={200} viewBox="0 0 200 200">
+        <circle cx={100} cy={100} r={80} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth={12}/>
+        <circle cx={100} cy={100} r={80} fill="none" stroke={done?'#ff453a':tc1} strokeWidth={12} strokeLinecap="round"
+          strokeDasharray={CIRC} strokeDashoffset={CIRC*(1-progress)} transform="rotate(-90 100 100)"
+          style={{transition:'stroke-dashoffset .12s linear,stroke .3s'}}/>
+      </svg>
+      <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center'}}>
+        <div style={gT(done?'#ff453a':tc1,done?'#ff6b81':tc2,46)}>{pad2(mm)}:{pad2(ss)}</div>
+        {done&&<div style={{fontSize:12,fontWeight:800,color:'#ff453a',marginTop:4}}>Termine !</div>}
+      </div>
+    </div>
+    <div style={{display:'flex',gap:10,width:'100%'}}>
+      {(remaining<duration||done)&&<button onClick={reset} style={{flex:1,padding:'14px',borderRadius:16,border:'none',background:'rgba(255,255,255,.09)',color:'var(--t2)',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif"}}>Reset</button>}
+      {!done&&<button onClick={toggle} style={{flex:1,padding:'14px',borderRadius:16,border:'none',background:running?'rgba(255,69,58,.2)':`rgba(${hex2rgb(tc1)},.2)`,color:running?'#ff453a':tc1,fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:"'Nunito',sans-serif",boxShadow:running?'0 4px 20px rgba(255,69,58,.2)':`0 4px 20px rgba(${hex2rgb(tc1)},.25)`}}>
+        {running?'Pause':remaining===duration?'Start':'Reprendre'}
+      </button>}
+    </div>
+  </div>);
+}
+
+function MinuteurModule(){
+  const [mode,setMode]=useState(()=>window.__utLive?.type==='timer'?'timer':'chrono');
+  const [cc1]=['#ffd32a'];const [tc1]=['#fd79a8'];
+  return(<div className="page" style={{paddingTop:22}}>
+    <h1 style={{fontSize:34,fontWeight:900,fontFamily:"'Nunito',sans-serif",padding:'0 18px',marginBottom:18}}>Minuteur</h1>
+    <div style={{display:'flex',gap:8,padding:'0 18px',marginBottom:20}}>
+      {[{id:'chrono',label:'Chrono',c:'#ffd32a'},{id:'timer',label:'Minuteur',c:'#fd79a8'}].map(m=>(
+        <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:'10px',borderRadius:14,border:'none',fontFamily:"'Nunito',sans-serif",fontWeight:800,fontSize:14,cursor:'pointer',transition:'all .2s',background:mode===m.id?`rgba(${hex2rgb(m.c)},.2)`:'rgba(255,255,255,.07)',color:mode===m.id?m.c:'var(--t3)',outline:mode===m.id?`1.5px solid rgba(${hex2rgb(m.c)},.4)`:'none'}}>{m.label}</button>
+      ))}
+    </div>
+    {mode==='chrono'?<ChronoSub key="chrono"/>:<TimerSub key="timer"/>}
+  </div>);
+}
+
+/* ══════════════════════════════════════
+   SETTINGS
 ══════════════════════════════════════ */
 function SettingsSheet({onClose}){
   const th=useContext(ThemeCtx);
   const Tog=({val,onC})=><div className={`tog ${val?'on':''}`} onClick={()=>onC(!val)}><div className="tog-knob"/></div>;
   const SR=({label,right,last})=><div className="list-row" style={{borderBottom:last?'none':'1px solid var(--bdr)'}}><span style={{fontSize:15,color:'var(--t1)',flex:1,fontWeight:600}}>{label}</span>{right}</div>;
-  return(
-    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="sheet" style={{maxHeight:'92vh'}}>
-        <div className="sheet-header">
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <h2 style={{fontSize:22,fontWeight:900,fontFamily:"'Nunito',sans-serif"}}>Reglages</h2>
-            <XBtn onClick={onClose}/>
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="sheet" style={{maxHeight:'92vh'}}>
+      <div className="sheet-header"><div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><h2 style={{fontSize:22,fontWeight:900,fontFamily:"'Nunito',sans-serif"}}>Reglages</h2><XBtn onClick={onClose}/></div></div>
+      <div className="sheet-body">
+        <div style={{marginBottom:24}}>
+          <div className="slbl">Theme</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+            {THEMES.map(t=>{const sel=th.theme.id===t.id;return(<div key={t.id} onClick={()=>th.setTheme(t)} style={{borderRadius:18,overflow:'hidden',cursor:'pointer',position:'relative',aspectRatio:'.72',background:`linear-gradient(145deg,${t.col1} 0%,${t.col2} 50%,${t.col3} 100%)`,outline:sel?`2.5px solid ${th.acc.hex}`:'2.5px solid transparent',outlineOffset:3,boxShadow:'0 4px 18px rgba(0,0,0,.5)',transition:'transform .2s,outline .15s',transform:sel?'scale(1.06)':'scale(1)'}}>
+              <div style={{position:'absolute',top:0,left:0,right:0,height:'48%',background:'linear-gradient(180deg,rgba(255,255,255,.14) 0%,transparent 100%)',pointerEvents:'none'}}/>
+              <div style={{position:'absolute',top:8,left:8,width:10,height:10,borderRadius:5,background:th.acc.hex,boxShadow:`0 0 8px rgba(${th.acc.rgb},.7)`}}/>
+              {sel&&<div style={{position:'absolute',top:6,right:6,width:17,height:17,borderRadius:9,background:th.acc.hex,display:'flex',alignItems:'center',justifyContent:'center'}}><Ico d={I.chk} size={9} sw={2.5}/></div>}
+              <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'18px 6px 7px',background:'linear-gradient(0deg,rgba(0,0,0,.55) 0%,transparent 100%)',fontSize:9.5,fontWeight:800,color:'rgba(255,255,255,.88)',textAlign:'center'}}>{t.name}</div>
+            </div>);})}
           </div>
         </div>
-        <div className="sheet-body">
-          <div style={{marginBottom:24}}>
-            <div className="slbl">Theme</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-              {THEMES.map(t=>{const sel=th.theme.id===t.id;return(
-                <div key={t.id} onClick={()=>th.setTheme(t)} style={{borderRadius:18,overflow:'hidden',cursor:'pointer',position:'relative',aspectRatio:'.72',background:`linear-gradient(145deg,${t.col1} 0%,${t.col2} 50%,${t.col3} 100%)`,outline:sel?`2.5px solid ${th.acc.hex}`:'2.5px solid transparent',outlineOffset:3,boxShadow:'0 4px 18px rgba(0,0,0,.5)',transition:'transform .2s,outline .15s',transform:sel?'scale(1.06)':'scale(1)'}}>
-                  <div style={{position:'absolute',top:0,left:0,right:0,height:'48%',background:'linear-gradient(180deg,rgba(255,255,255,.14) 0%,transparent 100%)',pointerEvents:'none'}}/>
-                  <div style={{position:'absolute',top:8,left:8,width:10,height:10,borderRadius:5,background:th.acc.hex,boxShadow:`0 0 8px rgba(${th.acc.rgb},.7)`}}/>
-                  {sel&&<div style={{position:'absolute',top:6,right:6,width:17,height:17,borderRadius:9,background:th.acc.hex,display:'flex',alignItems:'center',justifyContent:'center'}}><Ico d={I.chk} size={9} sw={2.5}/></div>}
-                  <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'18px 6px 7px',background:'linear-gradient(0deg,rgba(0,0,0,.55) 0%,transparent 100%)',fontSize:9.5,fontWeight:800,color:'rgba(255,255,255,.88)',textAlign:'center'}}>{t.name}</div>
-                </div>
-              );})}
-            </div>
+        <div style={{marginBottom:24}}>
+          <div className="slbl">Couleur d'accent</div>
+          <div className="card" style={{padding:'16px 18px'}}><div style={{display:'flex',gap:14,justifyContent:'center'}}>{ACCENTS.map(a=><div key={a.id} onClick={()=>th.setAcc(a)} style={{width:38,height:38,borderRadius:14,background:a.hex,cursor:'pointer',outline:th.acc.id===a.id?`3px solid ${a.hex}`:'3px solid transparent',outlineOffset:3,boxShadow:th.acc.id===a.id?`0 0 16px rgba(${a.rgb},.55)`:'none',transition:'all .2s',transform:th.acc.id===a.id?'scale(1.18)':'scale(1)'}}/>)}</div></div>
+        </div>
+        <div style={{marginBottom:24}}>
+          <div className="slbl">Profil</div>
+          <div className="list-wrap"><div className="list-row" style={{borderBottom:'none',gap:14}}><span style={{fontSize:15,flex:1,fontWeight:600}}>Prenom</span><input defaultValue={ls.get('ut4_name','Leo')} onBlur={e=>ls.set('ut4_name',e.target.value||'Leo')} style={{background:'none',border:'none',outline:'none',color:'var(--t3)',fontSize:15,fontFamily:'inherit',textAlign:'right',width:100}} placeholder="Leo"/></div></div>
+        </div>
+        <div style={{marginBottom:24}}>
+          <div className="slbl">Affichage</div>
+          <div className="list-wrap">
+            <SR label="Texte agrandi" right={<Tog val={th.big} onC={th.setBig}/>}/>
+            <SR label="Libelles onglets" right={<Tog val={th.lbl} onC={th.setLbl}/>}/>
+            <SR label="Debut lundi" last right={<Tog val={th.mon} onC={th.setMon}/>}/>
           </div>
-          <div style={{marginBottom:24}}>
-            <div className="slbl">Couleur d'accent</div>
-            <div className="card" style={{padding:'16px 18px'}}>
-              <div style={{display:'flex',gap:14,justifyContent:'center'}}>{ACCENTS.map(a=><div key={a.id} onClick={()=>th.setAcc(a)} style={{width:38,height:38,borderRadius:14,background:a.hex,cursor:'pointer',outline:th.acc.id===a.id?`3px solid ${a.hex}`:'3px solid transparent',outlineOffset:3,boxShadow:th.acc.id===a.id?`0 0 16px rgba(${a.rgb},.55)`:'none',transition:'all .2s',transform:th.acc.id===a.id?'scale(1.18)':'scale(1)'}}/>)}</div>
-            </div>
-          </div>
-          <div style={{marginBottom:24}}>
-            <div className="slbl">Profil</div>
-            <div className="list-wrap">
-              <div className="list-row" style={{borderBottom:'none',gap:14}}>
-                <span style={{fontSize:15,color:'var(--t1)',flex:1,fontWeight:600}}>Prenom</span>
-                <input defaultValue={ls.get('ut4_name','Leo')} onBlur={e=>ls.set('ut4_name',e.target.value||'Leo')} style={{background:'none',border:'none',outline:'none',color:'var(--t3)',fontSize:15,fontFamily:'inherit',textAlign:'right',width:100}} placeholder="Leo"/>
-              </div>
-            </div>
-          </div>
-          <div style={{marginBottom:24}}>
-            <div className="slbl">Affichage</div>
-            <div className="list-wrap">
-              <SR label="Texte agrandi"    right={<Tog val={th.big} onC={th.setBig}/>}/>
-              <SR label="Libelles onglets" right={<Tog val={th.lbl} onC={th.setLbl}/>}/>
-              <SR label="Debut lundi" last right={<Tog val={th.mon} onC={th.setMon}/>}/>
-            </div>
-          </div>
-          <div style={{marginBottom:24}}>
-            <div className="slbl">Notifications</div>
-            <div className="list-wrap">
-              <div className="list-row" style={{borderBottom:'none'}}>
-                <span style={{fontSize:15,color:'var(--t1)',flex:1,fontWeight:600}}>Activer les alertes</span>
-                <button onClick={async()=>{if('Notification'in window){const p=await Notification.requestPermission();alert(p==='granted'?'Activees !':'Refusee.');}else alert('Non supporte.');}} style={{background:'rgba(var(--acc-rgb),.15)',border:'none',borderRadius:10,padding:'6px 14px',color:'var(--acc)',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Autoriser</button>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div className="slbl">A propos</div>
-            <div className="list-wrap">
-              <SR label="UniTools"      right={<span style={{fontSize:13,color:'var(--t3)',fontWeight:700}}>v5.0</span>}/>
-              <SR label="Developpe par" last right={<span style={{fontSize:13,color:'var(--acc)',fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>Leo</span>}/>
-            </div>
+        </div>
+        <div style={{marginBottom:24}}>
+          <div className="slbl">Notifications</div>
+          <div className="list-wrap"><div className="list-row" style={{borderBottom:'none'}}><span style={{fontSize:15,flex:1,fontWeight:600}}>Activer les alertes</span><button onClick={async()=>{if('Notification'in window){const p=await Notification.requestPermission();alert(p==='granted'?'Activees !':'Refusee.');}}} style={{background:'rgba(var(--acc-rgb),.15)',border:'none',borderRadius:10,padding:'6px 14px',color:'var(--acc)',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Autoriser</button></div></div>
+        </div>
+        <div>
+          <div className="slbl">A propos</div>
+          <div className="list-wrap">
+            <SR label="UniTools" right={<span style={{fontSize:13,color:'var(--t3)',fontWeight:700}}>v6.0</span>}/>
+            <SR label="Developpe par" last right={<span style={{fontSize:13,color:'var(--acc)',fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>Leo</span>}/>
           </div>
         </div>
       </div>
     </div>
-  );
+  </div>);
 }
 
-/* ══════════════════════════════════════
-   SHARED COMPONENTS
-══════════════════════════════════════ */
-function IcoBtn({onClick,acc,children,style}){return <button onClick={onClick} style={{width:34,height:34,borderRadius:11,background:acc?'var(--acc)':'var(--card)',border:acc?'none':'1px solid var(--bdr)',cursor:'pointer',color:acc?'#fff':'var(--t1)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:acc?`0 3px 12px rgba(var(--acc-rgb),.4)`:undefined,...style}}>{children}</button>;}
-function XBtn({onClick}){return <button onClick={onClick} style={{width:30,height:30,borderRadius:10,background:'rgba(255,255,255,.1)',border:'none',cursor:'pointer',color:'var(--t2)',display:'flex',alignItems:'center',justifyContent:'center'}}><Ico d={I.x} size={14}/></button>;}
-function MiniLabel({children}){return <div style={{fontSize:10,fontWeight:700,color:'var(--t3)',letterSpacing:'.07em'}}>{children}</div>;}
-function ColorSwatch({c,sel,onClick}){return <div onClick={onClick} style={{width:28,height:28,borderRadius:8,background:c,cursor:'pointer',outline:sel?`2px solid ${c}`:'2px solid transparent',outlineOffset:2,transition:'all .15s',transform:sel?'scale(1.15)':'scale(1)',boxShadow:sel?`0 0 12px rgba(${hex2rgb(c)},.5)`:'none'}}/>;}
-function RowTog({label,val,onChange}){return <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><span style={{fontSize:14,color:'var(--t2)',fontWeight:600}}>{label}</span><div className={`tog ${val?'on':''}`} onClick={()=>onChange(!val)} style={{flexShrink:0}}><div className="tog-knob"/></div></div>;}
-function SheetModal({title,onClose,children}){return <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="sheet" style={{maxHeight:'60vh'}}><div className="sheet-header"><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}><h2 style={{fontSize:19,fontWeight:800}}>{title}</h2><XBtn onClick={onClose}/></div></div><div className="sheet-body">{children}</div></div></div>;}
+/* ══ SHARED COMPONENTS ══ */
+function IcoBtn({onClick,acc,children,style}){return<button onClick={onClick} style={{width:34,height:34,borderRadius:11,background:acc?'var(--acc)':'var(--card)',border:acc?'none':'1px solid var(--bdr)',cursor:'pointer',color:acc?'#fff':'var(--t1)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:acc?`0 3px 12px rgba(var(--acc-rgb),.4)`:undefined,...style}}>{children}</button>;}
+function XBtn({onClick}){return<button onClick={onClick} style={{width:30,height:30,borderRadius:10,background:'rgba(255,255,255,.1)',border:'none',cursor:'pointer',color:'var(--t2)',display:'flex',alignItems:'center',justifyContent:'center'}}><Ico d={I.x} size={14}/></button>;}
+function MiniLabel({children}){return<div style={{fontSize:10,fontWeight:700,color:'var(--t3)',letterSpacing:'.07em'}}>{children}</div>;}
+function ColorSwatch({c,sel,onClick}){return<div onClick={onClick} style={{width:28,height:28,borderRadius:8,background:c,cursor:'pointer',outline:sel?`2px solid ${c}`:'2px solid transparent',outlineOffset:2,transition:'all .15s',transform:sel?'scale(1.15)':'scale(1)',boxShadow:sel?`0 0 12px rgba(${hex2rgb(c)},.5)`:'none'}}/>;}
+function RowTog({label,val,onChange}){return<div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><span style={{fontSize:14,color:'var(--t2)',fontWeight:600}}>{label}</span><div className={`tog ${val?'on':''}`} onClick={()=>onChange(!val)} style={{flexShrink:0}}><div className="tog-knob"/></div></div>;}
+function SheetModal({title,onClose,children}){return<div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="sheet" style={{maxHeight:'60vh'}}><div className="sheet-header"><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}><h2 style={{fontSize:19,fontWeight:800}}>{title}</h2><XBtn onClick={onClose}/></div></div><div className="sheet-body">{children}</div></div></div>;}
 
 /* ══════════════════════════════════════
-   APP SHELL
+   APP SHELL — 6 TABS
 ══════════════════════════════════════ */
 const TABS=[
-  {id:'home', lbl:'Accueil',      ico:I.home},
-  {id:'cal',  lbl:'Calendrier',   ico:I.cal},
-  {id:'calc', lbl:'Calculatrice', ico:I.calc},
-  {id:'notes',lbl:'Notes',        ico:I.note},
-  {id:'rem',  lbl:'Rappels',      ico:I.bell},
+  {id:'home', lbl:'Accueil', ico:I.home},
+  {id:'cal',  lbl:'Agenda',  ico:I.cal},
+  {id:'calc', lbl:'Calcul',  ico:I.calc},
+  {id:'notes',lbl:'Notes',   ico:I.note},
+  {id:'rem',  lbl:'Rappels', ico:I.bell},
+  {id:'timer',lbl:'Minuteur',ico:I.timer},
 ];
 
 function App(){
   const appRef=useRef(null);
-  const [tab,   setTab]  =useState('home');
-  const [sett,  setSett] =useState(false);
-  const [acc,   setAccS] =useState(()=>ls.get('ut3_acc',ACCENTS[0]));
-  const [theme, setThS]  =useState(()=>ls.get('ut3_theme',THEMES[0]));
-  const [big,   setBigS] =useState(()=>ls.get('ut3_big',false));
-  const [lbl,   setLblS] =useState(()=>ls.get('ut3_lbl',true));
-  const [mon,   setMonS] =useState(()=>ls.get('ut3_mon',true));
-
-  const setAcc  =a=>{setAccS(a); ls.set('ut3_acc',a);};
-  const setTheme=t=>{setThS(t);  ls.set('ut3_theme',t);};
-  const setBig  =v=>{setBigS(v); ls.set('ut3_big',v);};
-  const setLbl  =v=>{setLblS(v); ls.set('ut3_lbl',v);};
-  const setMon  =v=>{setMonS(v); ls.set('ut3_mon',v);};
+  const [tab,setTab]=useState('home');const [sett,setSett]=useState(false);
+  const [acc,setAccS]=useState(()=>ls.get('ut3_acc',ACCENTS[0]));
+  const [theme,setThS]=useState(()=>ls.get('ut3_theme',THEMES[0]));
+  const [big,setBigS]=useState(()=>ls.get('ut3_big',false));
+  const [lbl,setLblS]=useState(()=>ls.get('ut3_lbl',true));
+  const [mon,setMonS]=useState(()=>ls.get('ut3_mon',true));
+  const setAcc=a=>{setAccS(a);ls.set('ut3_acc',a);};const setTheme=t=>{setThS(t);ls.set('ut3_theme',t);};
+  const setBig=v=>{setBigS(v);ls.set('ut3_big',v);};const setLbl=v=>{setLblS(v);ls.set('ut3_lbl',v);};const setMon=v=>{setMonS(v);ls.set('ut3_mon',v);};
 
   useEffect(()=>{
-    const el=appRef.current; if(!el)return;
+    const el=appRef.current;if(!el)return;
     const root=document.documentElement;
-    root.style.setProperty('--acc',     acc.hex);
-    root.style.setProperty('--acc-rgb', acc.rgb);
-    root.style.setProperty('--card',    theme.card);
-    root.style.setProperty('--bdr',     theme.bdr);
-    root.style.setProperty('--t1',      theme.t1);
-    root.style.setProperty('--t2',      theme.t2);
-    root.style.setProperty('--t3',      theme.t3);
+    root.style.setProperty('--acc',acc.hex);root.style.setProperty('--acc-rgb',acc.rgb);
+    root.style.setProperty('--card',theme.card);root.style.setProperty('--bdr',theme.bdr);
+    root.style.setProperty('--t1',theme.t1);root.style.setProperty('--t2',theme.t2);root.style.setProperty('--t3',theme.t3);
     root.fontSize=big?'17px':'16px';
-    const grad=theme.grad.replace('ACC_RGB',acc.rgb);
-    el.style.background=grad;
+    const grad=theme.grad.replace('ACC_RGB',acc.rgb);el.style.background=grad;
   },[acc,theme,big]);
 
-  const render=()=>{
-    switch(tab){
-      case 'home':  return <HomeModule onNav={id=>setTab(id)} onSettings={()=>setSett(true)}/>;
-      case 'cal':   return <CalendarModule/>;
-      case 'calc':  return <CalculatorModule/>;
-      case 'notes': return <NotesModule/>;
-      case 'rem':   return <RemindersModule/>;
-    }
-  };
+  const render=()=>{switch(tab){
+    case'home':  return<HomeModule onNav={id=>setTab(id)} onSettings={()=>setSett(true)}/>;
+    case'cal':   return<CalendarModule/>;
+    case'calc':  return<CalculatorScreen/>;
+    case'notes': return<NotesModule/>;
+    case'rem':   return<RemindersModule/>;
+    case'timer': return<MinuteurModule/>;
+  }};
 
-  return(
-    <ThemeCtx.Provider value={{acc,setAcc,theme,setTheme,big,setBig,lbl,setLbl,mon,setMon}}>
-      <div className="app" ref={appRef}>
-        <div className="scroll" key={tab}>{render()}</div>
-        <div className="tabbar">
-          {TABS.map(t=>(
-            <button key={t.id} className={`tab ${tab===t.id?'on':''}`} onClick={()=>setTab(t.id)}>
-              <Ico d={t.ico} size={21} sw={tab===t.id?2.2:1.6}/>
-              {lbl&&<span className="tab-lbl">{t.lbl}</span>}
-            </button>
-          ))}
-        </div>
-        {sett&&<SettingsSheet onClose={()=>setSett(false)}/>}
+  return(<ThemeCtx.Provider value={{acc,setAcc,theme,setTheme,big,setBig,lbl,setLbl,mon,setMon}}>
+    <div className="app" ref={appRef}>
+      <div className="scroll" key={tab}>{render()}</div>
+      <div className="tabbar">
+        {TABS.map(t=>(<button key={t.id} className={`tab ${tab===t.id?'on':''}`} onClick={()=>setTab(t.id)}>
+          <Ico d={t.ico} size={20} sw={tab===t.id?2.2:1.6}/>
+          {lbl&&<span className="tab-lbl">{t.lbl}</span>}
+        </button>))}
       </div>
-    </ThemeCtx.Provider>
-  );
+      {sett&&<SettingsSheet onClose={()=>setSett(false)}/>}
+    </div>
+  </ThemeCtx.Provider>);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
